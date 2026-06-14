@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>sprich.</title>
+
+<!-- iOS PWA / Homescreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="sprich.">
+<meta name="theme-color" content="#1B2237">
+<link rel="manifest" href='data:application/json,{"name":"sprich.","short_name":"sprich.","start_url":".","display":"standalone","background_color":"%23F5F4F0","theme_color":"%231B2237"}'>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --paper:#F5F4F0;
+  --card:#FFFFFF;
+  --ink:#1B2237;
+  --ink-soft:#5C6276;
+  --ink-faint:#9097A6;
+  --line:#E5E3DC;
+  --line-soft:#EFEDE7;
+  --ok:#2E8B6B;
+  --bad:#C8503F;
+  /* language accent — overwritten when a language is active */
+  --accent:#2D2A55;
+  --accent-tint:#E9E8F2;
+  --display:"Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --body:"Inter", system-ui, -apple-system, sans-serif;
+  --radius:18px;
+  --radius-sm:12px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--body);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input{font-family:inherit;}
+
+#app{
+  max-width:520px;
+  margin:0 auto;
+  min-height:100dvh;
+  padding:calc(var(--safe-top) + 8px) 18px calc(var(--safe-bot) + 24px);
+}
+
+/* ============ HEADER ============ */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 2px 18px;}
+.brand{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em;}
+.brand span{color:var(--accent);}
+.iconbtn{
+  width:42px;height:42px;border-radius:50%;background:var(--card);
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:18px;transition:transform .12s ease;
+}
+.iconbtn:active{transform:scale(.92);}
+
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 2px 10px;}
+
+/* ============ LANGUAGE CARDS ============ */
+.lang-card{
+  display:block;width:100%;text-align:left;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;margin-bottom:14px;position:relative;overflow:hidden;
+  transition:transform .14s ease;
+}
+.lang-card:active{transform:scale(.985);}
+.lang-card .stripe{position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--lc);}
+.lang-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.flag{font-size:34px;line-height:1;}
+.lang-name{font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:-.01em;}
+.lang-sub{font-size:13px;color:var(--ink-soft);}
+.chip{
+  margin-left:auto;font-size:12px;font-weight:700;letter-spacing:.03em;
+  background:var(--lct);color:var(--lc);padding:5px 11px;border-radius:999px;
+}
+.bar{height:7px;background:var(--line-soft);border-radius:999px;overflow:hidden;}
+.bar>i{display:block;height:100%;background:var(--lc);border-radius:999px;transition:width .4s ease;}
+.lang-foot{display:flex;justify-content:space-between;margin-top:9px;font-size:12px;color:var(--ink-faint);}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--accent);color:#fff;font-weight:600;font-size:16px;
+  padding:15px 20px;border-radius:14px;width:100%;transition:transform .12s ease, opacity .2s;
+}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.5;}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent);}
+.btn.soft{background:var(--accent-tint);color:var(--accent);}
+.btn.sm{width:auto;padding:11px 16px;font-size:14px;border-radius:11px;}
+
+/* ============ PATH VIEW ============ */
+.back{display:inline-flex;align-items:center;gap:7px;color:var(--ink-soft);font-weight:600;font-size:15px;margin-bottom:14px;padding:6px 2px;}
+.page-title{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 4px;}
+.page-sub{color:var(--ink-soft);font-size:14px;margin:0 0 22px;}
+
+.unit{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:15px 16px;margin-bottom:11px;transition:transform .12s ease;
+}
+.unit:active{transform:scale(.985);}
+.unit:disabled{opacity:.55;}
+.unit-num{
+  flex:0 0 auto;width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;
+  background:var(--accent-tint);color:var(--accent);
+}
+.unit.done .unit-num{background:var(--accent);color:#fff;}
+.unit-body{flex:1;min-width:0;}
+.unit-title{font-weight:600;font-size:16px;}
+.unit-can{font-size:12.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.unit-state{font-size:18px;color:var(--accent);}
+.module-head{font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink);margin:24px 2px 12px;letter-spacing:.01em;}
+.module-head:first-child{margin-top:2px;}
+.mh-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;text-align:left;}
+.mh-meta{font-size:12px;font-weight:600;color:var(--ink-faint);white-space:nowrap;}
+.goal-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px;}
+.goal-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;}
+.goal-top b{font-size:18px;}
+.goal-top span{font-size:12.5px;color:var(--ink-faint);}
+.vgroup-label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:16px 0 2px;}
+.vgroup-label.first{margin-top:0;}
+.vocab-count{font-size:13px;color:var(--ink-faint);font-weight:500;}
+/* Vokabeltrainer */
+.vstats{display:flex;gap:9px;margin-bottom:18px;}
+.vstat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 8px;text-align:center;}
+.vstat b{display:block;font-family:var(--display);font-size:23px;line-height:1.1;}
+.vstat span{font-size:11px;color:var(--ink-faint);letter-spacing:.02em;}
+.mode-btn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:15px 16px;margin-bottom:10px;transition:transform .12s ease;}
+.mode-btn:active{transform:scale(.985);}
+.mode-btn:disabled{opacity:.5;}
+.mode-btn .mi{font-size:22px;flex:0 0 auto;}
+.mode-btn .mt{font-weight:600;}
+.mode-btn .md{font-size:12.5px;color:var(--ink-soft);}
+.flashcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:34px 22px;text-align:center;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;margin-bottom:16px;}
+.fc-term{font-family:var(--display);font-size:29px;font-weight:600;color:var(--accent);letter-spacing:-.01em;}
+.fc-cat{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;}
+.fc-back{font-size:21px;font-weight:500;}
+.fc-divider{width:40px;height:2px;background:var(--line);border-radius:2px;}
+.grade-row{display:flex;gap:8px;}
+.grade-row button{flex:1;padding:14px 0;border-radius:12px;font-weight:600;font-size:15px;border:1.5px solid var(--line);background:var(--card);transition:transform .1s ease;}
+.grade-row button:active{transform:scale(.96);}
+.grade-row button.again{border-color:var(--bad);color:var(--bad);}
+.grade-row button.good{border-color:var(--accent);color:var(--accent);}
+.grade-row button.easy{border-color:var(--ok);color:var(--ok);}
+
+/* ============ LESSON ============ */
+.lesson-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.lesson-card h3{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 12px;letter-spacing:-.01em;}
+.vocab-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft);gap:12px;}
+.vocab-row:last-child{border-bottom:none;}
+.vocab-term{font-weight:600;}
+.vocab-term button{margin-left:7px;color:var(--accent);font-size:14px;}
+.vocab-de{color:var(--ink-soft);font-size:14px;text-align:right;}
+.grammar-note{background:var(--accent-tint);border-radius:var(--radius-sm);padding:14px;font-size:14px;color:var(--ink);}
+
+.ex-progress{display:flex;gap:6px;margin-bottom:18px;}
+.ex-progress i{flex:1;height:5px;border-radius:999px;background:var(--line);}
+.ex-progress i.on{background:var(--accent);}
+.q-prompt{font-size:13px;color:var(--ink-faint);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
+.q-text{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.01em;margin-bottom:20px;line-height:1.3;}
+.q-text.target{color:var(--accent);}
+.opt{
+  display:block;width:100%;text-align:left;background:var(--card);
+  border:1.5px solid var(--line);border-radius:13px;padding:15px 16px;margin-bottom:10px;
+  font-size:16px;transition:all .12s ease;
+}
+.opt:active{transform:scale(.98);}
+.opt.correct{border-color:var(--ok);background:#EAF6F1;color:#1f6b50;font-weight:600;}
+.opt.wrong{border-color:var(--bad);background:#FBECE9;color:#9e3a2c;}
+.opt.dim{opacity:.5;}
+.ans-input{
+  width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:13px;
+  padding:15px 16px;font-size:17px;color:var(--ink);outline:none;
+}
+.ans-input:focus{border-color:var(--accent);}
+.feedback{margin-top:16px;padding:14px 16px;border-radius:13px;font-size:14.5px;}
+.feedback.ok{background:#EAF6F1;color:#1f6b50;}
+.feedback.no{background:#FBECE9;color:#9e3a2c;}
+.feedback b{display:block;margin-bottom:3px;}
+
+/* ============ CALL MODE ============ */
+.call-screen{
+  position:fixed;inset:0;z-index:50;background:linear-gradient(170deg, var(--accent) 0%, #14182b 100%);
+  color:#fff;display:flex;flex-direction:column;
+  padding:calc(var(--safe-top) + 16px) 22px calc(var(--safe-bot) + 22px);
+}
+.call-top{display:flex;align-items:center;justify-content:space-between;}
+.call-who{font-weight:600;}
+.call-who small{display:block;opacity:.7;font-weight:400;font-size:12.5px;}
+.call-end{background:#ff4d4d;width:44px;height:44px;border-radius:50%;font-size:20px;display:flex;align-items:center;justify-content:center;}
+.call-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:26px;}
+.orb{
+  width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), rgba(255,255,255,.08));
+  box-shadow:0 0 0 0 rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;
+  font-size:46px;transition:transform .3s ease;
+}
+.orb.speaking{animation:pulse 1.3s ease-in-out infinite;}
+.orb.listening{animation:listen 1s ease-in-out infinite;box-shadow:0 0 0 8px rgba(255,255,255,.12);}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.3);}50%{transform:scale(1.08);box-shadow:0 0 0 26px rgba(255,255,255,0);}}
+@keyframes listen{0%,100%{transform:scale(1);}50%{transform:scale(1.04);}}
+.call-line{font-family:var(--display);font-size:23px;font-weight:600;line-height:1.32;letter-spacing:-.01em;max-width:380px;min-height:62px;}
+.call-status{opacity:.75;font-size:14px;min-height:20px;}
+.correction{
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);
+  border-radius:13px;padding:11px 14px;font-size:13.5px;max-width:380px;backdrop-filter:blur(6px);
+}
+.correction b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-bottom:3px;}
+.call-controls{display:flex;flex-direction:column;gap:12px;}
+.call-row{display:flex;gap:10px;align-items:center;}
+.mic{
+  flex:1;height:60px;border-radius:16px;background:#fff;color:var(--accent);
+  font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:transform .12s ease;
+}
+.mic:active{transform:scale(.97);}
+.mic.live{background:#ff4d4d;color:#fff;}
+.mic-icon{width:42px;height:60px;border-radius:16px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.call-textin{
+  width:100%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  border-radius:14px;padding:14px 16px;color:#fff;font-size:16px;outline:none;
+}
+.call-textin::placeholder{color:rgba(255,255,255,.6);}
+.scenario-pick{display:flex;flex-direction:column;gap:10px;max-width:380px;margin:0 auto;width:100%;}
+.scenario-pick button{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:14px;
+  padding:16px;color:#fff;text-align:left;font-size:15px;transition:transform .12s ease;
+}
+.scenario-pick button:active{transform:scale(.98);}
+.scenario-pick button b{display:block;font-family:var(--display);font-size:17px;margin-bottom:2px;}
+.scenario-pick button span{opacity:.7;font-size:13px;}
+
+/* ============ SETTINGS / MODAL ============ */
+.field{margin-bottom:18px;}
+.field label{display:block;font-weight:600;font-size:14px;margin-bottom:7px;}
+.field .hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+.field input,.field select{
+  width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:12px;
+  padding:13px 14px;font-size:15px;color:var(--ink);outline:none;
+}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.seg{display:flex;gap:8px;flex-wrap:wrap;}
+.seg button{
+  flex:1;min-width:54px;padding:11px 0;border:1.5px solid var(--line);border-radius:11px;
+  font-weight:600;background:var(--card);
+}
+.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ============ MISC ============ */
+.loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:50px 0;color:var(--ink-soft);}
+.spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.err{background:#FBECE9;color:#9e3a2c;border-radius:13px;padding:14px 16px;font-size:14px;margin:10px 0;}
+.toast{
+  position:fixed;left:50%;bottom:calc(var(--safe-bot) + 24px);transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-size:14px;font-weight:500;
+  opacity:0;transition:all .3s ease;pointer-events:none;z-index:99;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.center-actions{margin-top:22px;}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   sprich. — Sprachlern-PWA
+   Single-file. State in localStorage. KI via Anthropic-Endpoint.
+   ========================================================= */
+
+/* ---- statische Sprach-Konfiguration ---- */
+const LANG_CONFIG = {
+  es: { name:"Spanisch",   flag:"🇪🇸", speak:"es-ES", aiName:"Spanisch",   accent:"#D6453F", tint:"#FBEAE8", defLevel:"A2" },
+  fr: { name:"Französisch",flag:"🇫🇷", speak:"fr-FR", aiName:"Französisch",accent:"#3556C9", tint:"#E7EBFA", defLevel:"A1" },
+  sv: { name:"Schwedisch", flag:"🇸🇪", speak:"sv-SE", aiName:"Schwedisch", accent:"#178A77", tint:"#E2F3EF", defLevel:"B1" },
+};
+const LEVELS = ["A1","A2","B1","B2","C1","C2"];
+
+/* Wortschatz-Ziel & Pfad-Größe */
+const WORD_GOAL_MIN = 6000, WORD_GOAL_MAX = 8000;
+const WORDS_PER_UNIT = 50;          // Zielgröße Wortschatz je Einheit
+const PATH_MODULES = 12;            // Anzahl Module
+const UNITS_PER_MODULE = 11;        // Einheiten je Modul  -> ~132 Einheiten -> ~6600 Wörter
+const FALLBACK_MODULES = [
+  "Erste Schritte & Begrüßung","Alltag & Tagesablauf","Zuhause & Wohnen",
+  "Menschen, Familie & Beziehungen","Essen, Trinken & Einkaufen","Unterwegs & Reisen",
+  "Arbeit, Schule & Beruf","Gesundheit & Körper","Freizeit, Hobbys & Kultur",
+  "Stadt, Natur & Umwelt","Gefühle, Meinungen & Diskussion","Welt, Medien & abstrakte Themen"
+];
+
+/* ---- State ---- */
+const STORE_KEY = "sprichState_v1";
+let state = loadState();
+let view = { name:"home" };          // {name, lang?, unitId?}
+let call = null;                     // Call-Mode Laufzeitobjekt
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  // Default-State mit vorbelegten Niveaus
+  const langs = {};
+  for(const code in LANG_CONFIG){
+    langs[code] = { level:LANG_CONFIG[code].defLevel, xp:0, mastery:0.5, path:null, progress:{}, recent:[], lessons:{}, voiceURI:null };
+  }
+  return {
+    settings:{
+      endpoint:"https://api.anthropic.com/v1/messages",
+      model:"claude-sonnet-4-6",
+      rate:0.95
+    },
+    langs
+  };
+}
+function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+
+function L(code){ return { ...LANG_CONFIG[code], code, ...state.langs[code] }; }
+
+/* ---- Akzentfarbe setzen ---- */
+function setAccent(code){
+  const root = document.documentElement.style;
+  if(code && LANG_CONFIG[code]){
+    root.setProperty("--accent", LANG_CONFIG[code].accent);
+    root.setProperty("--accent-tint", LANG_CONFIG[code].tint);
+  }else{
+    root.setProperty("--accent", "#2D2A55");
+    root.setProperty("--accent-tint", "#E9E8F2");
+  }
+}
+
+/* =========================================================
+   KI-Aufruf
+   ========================================================= */
+async function callAI(system, messages, opts={}){
+  const body = {
+    model: state.settings.model || "claude-sonnet-4-6",
+    max_tokens: opts.maxTokens || 1500,
+    system,
+    messages
+  };
+  const res = await fetch(state.settings.endpoint, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){
+    let detail="";
+    try{ detail = (await res.json()).error?.message || ""; }catch(e){}
+    throw new Error("API "+res.status+(detail?": "+detail:""));
+  }
+  const data = await res.json();
+  const text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+  return text;
+}
+
+/* robuste JSON-Extraktion */
+function parseJSON(text){
+  if(!text) throw new Error("Leere Antwort");
+  let t = text.replace(/```json/gi,"").replace(/```/g,"").trim();
+  try{ return JSON.parse(t); }catch(e){}
+  // erstes/letztes Klammerpaar herausschneiden
+  const firstObj = t.indexOf("{"), firstArr = t.indexOf("[");
+  let start = -1, openCh="{", closeCh="}";
+  if(firstArr!==-1 && (firstObj===-1 || firstArr<firstObj)){ start=firstArr; openCh="["; closeCh="]"; }
+  else if(firstObj!==-1){ start=firstObj; }
+  if(start>=0){
+    const end = t.lastIndexOf(closeCh);
+    if(end>start){
+      let sub = t.slice(start, end+1).replace(/,\s*([}\]])/g,"$1");
+      return JSON.parse(sub);
+    }
+  }
+  throw new Error("Konnte JSON nicht lesen");
+}
+
+/* extrahiert ALLE vollständigen {…}-Objekte aus dem ersten [ … ]-Array,
+   auch wenn die Antwort abgeschnitten wurde */
+function extractObjects(text){
+  if(!text) return [];
+  const t = text.replace(/```json/gi,"").replace(/```/g,"");
+  const start = t.indexOf("[");
+  const from = start>=0 ? start : 0;
+  let inStr=false, escp=false, objStart=-1, depth=0;
+  const out=[];
+  for(let i=from;i<t.length;i++){
+    const c=t[i];
+    if(inStr){ if(escp) escp=false; else if(c==="\\") escp=true; else if(c==='"') inStr=false; continue; }
+    if(c==='"'){ inStr=true; continue; }
+    if(c==="{"){ if(objStart<0){ objStart=i; depth=1; } else depth++; }
+    else if(c==="}"){ if(objStart>=0){ depth--; if(depth===0){ try{ out.push(JSON.parse(t.slice(objStart,i+1))); }catch(e){} objStart=-1; } } }
+    else if(c==="]" && objStart<0 && start>=0){ break; }
+  }
+  return out;
+}
+
+/* =========================================================
+   Sprachausgabe (TTS) + Spracherkennung (STT)
+   ========================================================= */
+let voicesReady = false;
+function loadVoices(){ if(window.speechSynthesis){ speechSynthesis.getVoices(); voicesReady=true; } }
+if(window.speechSynthesis){
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+function pickVoice(speakCode){
+  if(!window.speechSynthesis) return null;
+  const vs = speechSynthesis.getVoices();
+  if(!vs.length) return null;
+  const pref = speakCode.toLowerCase();
+  const base = pref.split("-")[0];
+  const exact = vs.filter(v=>v.lang.toLowerCase()===pref);
+  const loose = vs.filter(v=>v.lang.toLowerCase().startsWith(base));
+  const pool = exact.length ? exact : loose;
+  if(!pool.length) return null;
+  // hochwertige Stimmen bevorzugen (Enhanced/Premium/Neural/Siri), Kompakt meiden
+  const GOOD = /(enhanced|premium|neural|siri|natural|hd)/i;
+  const BAD  = /(compact|eloquence)/i;
+  return pool.find(v=>GOOD.test(v.name))
+      || pool.find(v=>!BAD.test(v.name))
+      || pool[0];
+}
+function resolveVoice(speakCode){
+  if(!window.speechSynthesis) return null;
+  const vs = speechSynthesis.getVoices();
+  const code = speakCode.split("-")[0].toLowerCase();
+  const saved = state.langs[code] && state.langs[code].voiceURI;
+  if(saved){ const m = vs.find(v=>v.voiceURI===saved); if(m) return m; }
+  return pickVoice(speakCode);
+}
+function speak(text, speakCode, onend){
+  if(!window.speechSynthesis){ if(onend) onend(); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = speakCode;
+  const v = resolveVoice(speakCode);
+  if(v) u.voice = v;
+  u.rate = state.settings.rate || 0.95;
+  u.pitch = 1.0;
+  if(onend){ u.onend = onend; u.onerror = onend; }
+  speechSynthesis.speak(u);
+}
+function stopSpeak(){ if(window.speechSynthesis) speechSynthesis.cancel(); }
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function sttAvailable(){ return !!SR; }
+
+/* =========================================================
+   Render-Router
+   ========================================================= */
+const app = ()=>document.getElementById("app");
+
+function render(){
+  if(view.name==="call"){ renderCall(); return; }
+  if(view.name==="home"){ setAccent(null); renderHome(); }
+  else if(view.name==="settings"){ setAccent(view.lang||null); renderSettings(); }
+  else if(view.name==="path"){ setAccent(view.lang); renderPath(); }
+  else if(view.name==="vocab"){ setAccent(view.lang); renderVocab(); }
+  else if(view.name==="lesson"){ setAccent(view.lang); renderLesson(); }
+  window.scrollTo(0,0);
+}
+function go(name, extra={}){ view = { name, ...extra }; render(); }
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+/* =========================================================
+   HOME
+   ========================================================= */
+function renderHome(){
+  const cards = Object.keys(LANG_CONFIG).map(code=>{
+    const l = L(code);
+    const total = (Array.isArray(l.modules) && l.modules.length) ? l.modules.length*UNITS_PER_MODULE : PATH_MODULES*UNITS_PER_MODULE;
+    const done = Object.values(l.progress).filter(s=>s==="done").length;
+    const pct = total ? Math.min(100, Math.round(done/total*100)) : 0;
+    const words = wordsLearned(code);
+    return `
+    <button class="lang-card" onclick="openLang('${code}')" style="--lc:${l.accent};--lct:${l.tint};">
+      <span class="stripe"></span>
+      <div class="lang-head">
+        <span class="flag">${l.flag}</span>
+        <div>
+          <div class="lang-name">${l.name}</div>
+          <div class="lang-sub">${done} von ${total} Einheiten</div>
+        </div>
+        <span class="chip">${l.level}</span>
+      </div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="lang-foot"><span>${l.xp} XP</span><span>📚 ${words} Wörter</span><span>${pct}%</span></div>
+    </button>`;
+  }).join("");
+
+  app().innerHTML = `
+    <div class="topbar">
+      <div class="brand">sprich<span>.</span></div>
+      <button class="iconbtn" onclick="go('settings')" aria-label="Einstellungen">⚙</button>
+    </div>
+    <p class="eyebrow">Deine Sprachen</p>
+    ${cards}
+    <p class="eyebrow" style="margin-top:26px">Heute</p>
+    <div class="lesson-card" style="text-align:center;">
+      <p style="margin:0 0 14px;color:var(--ink-soft);font-size:14.5px;">Wähle eine Sprache und steig in den Lernpfad ein — oder geh direkt in den Call Mode zum Sprechen.</p>
+    </div>
+  `;
+}
+function openLang(code){ go("path", { lang:code }); }
+
+/* =========================================================
+   PATH (Lernpfad)
+   ========================================================= */
+async function renderPath(){
+  const code = view.lang, l = L(code);
+  app().innerHTML = `
+    <button class="back" onclick="go('home')">‹ Sprachen</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <span class="flag">${l.flag}</span>
+      <h1 class="page-title" style="margin:0">${l.name}</h1>
+      <span class="chip" style="--lc:${l.accent};--lct:${l.tint};margin-left:auto;background:${l.tint};color:${l.accent};">${l.level}</span>
+    </div>
+    <p class="page-sub">Lernpfad · Niveau ${l.level}</p>
+    <div id="pathBody"></div>
+  `;
+  // Module einmalig erzeugen (1 Aufruf). Alte Pfade ohne Modul-Liste werden migriert.
+  if(!Array.isArray(state.langs[code].modules) || !state.langs[code].modules.length){
+    state.langs[code].path = [];
+    state.langs[code].progress = {};
+    const setLoad = (m)=>{ const b=document.getElementById("pathBody"); if(b) b.innerHTML = loadingHTML(m); };
+    setLoad("Plane den Kurs …");
+    try{
+      state.langs[code].modules = await generateModules(code);
+      saveState();
+    }catch(e){
+      const hint = apiHint(e.message);
+      document.getElementById("pathBody").innerHTML =
+        `<div class="err">Kurs konnte nicht erstellt werden.<br>${esc(e.message)}${hint?`<br><br>${esc(hint)}`:""}</div>
+         <button class="btn ghost" onclick="renderPath()">Erneut versuchen</button>
+         <button class="btn soft" style="margin-top:10px" onclick="go('settings')">Zu den Einstellungen</button>`;
+      return;
+    }
+  }
+  openModuleIdx = null; moduleLoading = {}; moduleErr = {}; moduleErrMsg = {};
+  paintUnits();
+}
+
+let openModuleIdx = null;
+let moduleLoading = {};
+let moduleErr = {};
+let moduleErrMsg = {};
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+function apiHint(msg){
+  msg = String(msg||"");
+  if(/401|403|unauthor|authentic|api key/i.test(msg))
+    return "Kein gültiger API-Zugang. Wenn du die App außerhalb von claude.ai nutzt (eigene Datei oder GitHub Pages), ruft sie direkt api.anthropic.com auf und das verlangt einen Schlüssel. Trag in den Einstellungen (Zahnrad) beim API-Endpoint deinen Cloudflare-Worker ein.";
+  if(/429|rate|too many/i.test(msg))
+    return "Rate-Limit erreicht. Kurz warten und erneut versuchen.";
+  return "";
+}
+
+function wordsLearned(code){
+  const lessons = state.langs[code].lessons || {};
+  let n = 0;
+  for(const k in lessons){ const v = lessons[k] && lessons[k].vocab; if(Array.isArray(v)) n += v.length; }
+  return n;
+}
+
+const PATH_JSON_SYS = "Du bist Kursdesigner:in für Sprachen nach GER (CEFR). Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Array, ohne Markdown, ohne Erklärtext.";
+
+async function generateModules(code){
+  const l = LANG_CONFIG[code];
+  const lvl = state.langs[code].level;
+  let names = [], lastErr = "";
+  for(let attempt=0; attempt<2 && !names.length; attempt++){
+    if(attempt) await sleep(800);
+    try{
+      const mt = await callAI(PATH_JSON_SYS, [{role:"user",content:
+        `Entwirf ${PATH_MODULES} thematische Module für einen umfassenden, progressiven ${l.aiName}-Kurs, der von Niveau ${lvl} schrittweise bis etwa C1 führt und insgesamt einen Wortschatz von ${WORD_GOAL_MIN}–${WORD_GOAL_MAX} Wörtern abdeckt. Von leicht nach schwer, ohne thematische Lücken. JSON-Array, jeder Eintrag {"name":"Modulname auf Deutsch"}.`
+      }], {maxTokens:700});
+      names = extractObjects(mt).map(m=>m.name).filter(Boolean);
+      if(!names.length) lastErr = "Leere Antwort vom Modell";
+    }catch(e){ lastErr = e.message; }
+  }
+  if(!names.length) throw new Error(lastErr || "Keine Module erhalten");
+  // bei Teilerfolg mit Standardmodulen auffüllen
+  names = names.slice(0, PATH_MODULES);
+  let i = 0;
+  while(names.length < PATH_MODULES && FALLBACK_MODULES[i]){ if(!names.includes(FALLBACK_MODULES[i])) names.push(FALLBACK_MODULES[i]); i++; }
+
+  const startIdx = Math.max(0, LEVELS.indexOf(lvl));
+  const endIdx = LEVELS.indexOf("C1");
+  return names.map((name,mi)=>({
+    name,
+    level: LEVELS[Math.min(LEVELS.length-1, Math.round(startIdx + (endIdx-startIdx) * mi / Math.max(1, names.length-1)))],
+    loaded: false
+  }));
+}
+
+async function loadModuleUnits(code, mi){
+  const mod = state.langs[code].modules[mi];
+  if(!mod || mod.loaded) return true;
+  const l = LANG_CONFIG[code];
+  let arr = [], lastErr = "";
+  for(let attempt=0; attempt<3 && !arr.length; attempt++){
+    await sleep(attempt===0 ? 350 : 900*attempt);   // Aufrufe entzerren + Backoff
+    try{
+      const ut = await callAI(PATH_JSON_SYS, [{role:"user",content:
+        `Modul "${mod.name}" eines ${l.aiName}-Kurses auf Niveau ${mod.level}. Erstelle ${UNITS_PER_MODULE} konkrete Einheiten zu diesem Modul, von leicht nach schwer. Jede Einheit ist ein klar abgegrenztes Wortfeld mit etwa ${WORDS_PER_UNIT} Vokabeln. JSON-Array, jeder Eintrag {"title":"kurzer deutscher Titel","theme":"konkretes Wortfeld/Situation","can_do":"Kann-Beschreibung auf Deutsch, max 8 Wörter"}.`
+      }], {maxTokens:1600});
+      arr = extractObjects(ut).filter(u=>u && (u.title||u.theme));
+      if(!arr.length) lastErr = "Leere Antwort vom Modell";
+    }catch(e){ lastErr = e.message; }
+  }
+  if(!arr.length){ moduleErrMsg[mi] = lastErr; return false; }
+  const units = arr.map((u,ui)=>({
+    id:`m${mi}-u${ui+1}`,
+    module:mod.name,
+    level:mod.level,
+    title:u.title||("Einheit "+(ui+1)),
+    theme:u.theme||u.title||"",
+    can_do:u.can_do||""
+  }));
+  state.langs[code].path = (state.langs[code].path||[]).filter(u=>u.module!==mod.name).concat(units);
+  mod.loaded = true;
+  saveState();
+  return true;
+}
+
+function paintUnits(){
+  const code = view.lang, l = L(code);
+  const modules = state.langs[code].modules || [];
+  const path = state.langs[code].path || [];
+  const progress = state.langs[code].progress || {};
+  if(openModuleIdx===null) openModuleIdx = 0;
+
+  const learned = wordsLearned(code);
+  const goalPct = Math.min(100, Math.round(learned / WORD_GOAL_MIN * 100));
+  const estWords = PATH_MODULES * UNITS_PER_MODULE * WORDS_PER_UNIT;
+  const doneCount = Object.values(progress).filter(s=>s==="done").length;
+
+  let html = `
+    <div class="goal-card" style="--lc:${l.accent};">
+      <div class="goal-top">
+        <b>${learned} Wörter</b>
+        <span>Ziel ${WORD_GOAL_MIN.toLocaleString('de-DE')}–${WORD_GOAL_MAX.toLocaleString('de-DE')}</span>
+      </div>
+      <div class="bar"><i style="width:${goalPct}%"></i></div>
+      <p class="hint" style="margin:9px 0 0;">${modules.length} Module · ${doneCount} Einheiten abgeschlossen · Kurs deckt ~${estWords.toLocaleString('de-DE')} Wörter ab</p>
+    </div>
+    <div style="text-align:right;margin:0 0 12px;">
+      <button class="btn soft sm" style="width:auto" onclick="regeneratePath('${code}')">↻ Pfad neu erstellen</button>
+    </div>`;
+
+  modules.forEach((mod,mi)=>{
+    const mUnits = path.filter(u=>u.module===mod.name);
+    const gDone = mUnits.filter(u=>progress[u.id]==="done").length;
+    const isOpen = mi===openModuleIdx;
+    html += `<button class="module-head mh-toggle" onclick="toggleModule(${mi})">
+        <span>${esc(mod.name)} <span class="hint" style="font-weight:400">· ${mod.level}</span></span>
+        <span class="mh-meta">${mod.loaded?`${gDone}/${mUnits.length}`:'…'} ${isOpen?'▴':'▾'}</span>
+      </button>`;
+    if(isOpen){
+      if(!mod.loaded){
+        html += moduleErr[mi]
+          ? `<div class="err">Einheiten konnten nicht geladen werden.${moduleErrMsg[mi]?`<br><span style="opacity:.8">${esc(moduleErrMsg[mi])}</span>`:""}${apiHint(moduleErrMsg[mi])?`<br><br>${esc(apiHint(moduleErrMsg[mi]))}`:""}</div>
+             <button class="btn ghost" onclick="retryModule(${mi})">Erneut versuchen</button>`
+          : loadingHTML("Lade Einheiten …");
+      }else{
+        mUnits.forEach((u,idx)=>{
+          const st = progress[u.id];
+          const prevDone = idx===0 || progress[mUnits[idx-1].id]==="done";
+          const locked = !prevDone && st!=="done";
+          html += `
+          <button class="unit ${st==='done'?'done':''}" ${locked?'disabled':''} onclick="openUnit('${u.id}')">
+            <span class="unit-num">${st==='done'?'✓':(idx+1)}</span>
+            <div class="unit-body">
+              <div class="unit-title">${esc(u.title)}</div>
+              <div class="unit-can">${esc(u.can_do||u.theme||"")}${u.level?` · ${u.level}`:""}</div>
+            </div>
+            <span class="unit-state">${locked?'🔒':(st==='done'?'':'›')}</span>
+          </button>`;
+        });
+      }
+    }
+  });
+
+  document.getElementById("pathBody").innerHTML = html + `
+    <div class="center-actions">
+      <button class="btn" onclick="go('vocab',{lang:'${code}'})">🎴 Vokabeltrainer</button>
+      <button class="btn ghost" style="margin-top:10px" onclick="go('call',{lang:'${code}'})">📞 Freies Gespräch im Call Mode</button>
+    </div>
+  `;
+
+  // offenes, noch nicht geladenes Modul nachladen
+  const openMod = modules[openModuleIdx];
+  if(openMod && !openMod.loaded && !moduleLoading[openModuleIdx] && !moduleErr[openModuleIdx]){
+    moduleLoading[openModuleIdx] = true;
+    const targetIdx = openModuleIdx;
+    loadModuleUnits(code, targetIdx).then(ok=>{
+      moduleLoading[targetIdx] = false;
+      if(!ok) moduleErr[targetIdx] = true;
+      if(view.name==="path") paintUnits();
+    });
+  }
+}
+function toggleModule(i){ openModuleIdx = (openModuleIdx===i ? -1 : i); paintUnits(); }
+function retryModule(mi){ moduleErr[mi] = false; moduleErrMsg[mi] = ""; paintUnits(); }
+function regeneratePath(code){
+  if(!confirm("Neuen Kurs für diese Sprache erstellen? Der bisherige Fortschritt dieser Sprache wird dabei zurückgesetzt.")) return;
+  state.langs[code].modules = null;
+  state.langs[code].path = [];
+  state.langs[code].progress = {};
+  state.langs[code].lessons = {};
+  saveState();
+  go("path", { lang:code });
+}
+function openUnit(id){ go("lesson", { lang:view.lang, unitId:id }); }
+
+/* =========================================================
+   LESSON: Wortschatz -> Übungen -> Konversationen
+   lessons[unitId] = { vocab:[{term,de,cat}], exercises:[...]|null, scenarios:[...]|null }
+   ========================================================= */
+let lessonRT = null; // {ex, step, correct, answered}
+
+function ensureLesson(code, unitId){
+  if(!state.langs[code].lessons[unitId]) state.langs[code].lessons[unitId] = { vocab:null, exercises:null, scenarios:null };
+  return state.langs[code].lessons[unitId];
+}
+
+async function renderLesson(){
+  const code = view.lang, l = L(code);
+  const unit = l.path.find(u=>u.id===view.unitId);
+  app().innerHTML = `
+    <button class="back" onclick="go('path',{lang:'${code}'})">‹ ${esc(l.name)}</button>
+    <h1 class="page-title">${esc(unit.title)}</h1>
+    <p class="page-sub">${esc(unit.can_do||unit.theme||"")}</p>
+    <div id="lessonBody"></div>
+  `;
+  const lesson = ensureLesson(code, unit.id);
+  if(!lesson.vocab){
+    document.getElementById("lessonBody").innerHTML = loadingHTML("Stelle den kompletten Wortschatz zusammen …");
+    try{
+      lesson.vocab = await generateVocab(code, unit);
+      saveState();
+    }catch(e){
+      document.getElementById("lessonBody").innerHTML =
+        `<div class="err">Wortschatz konnte nicht geladen werden.<br>${esc(e.message)}</div>
+         <button class="btn ghost" onclick="renderLesson()">Erneut versuchen</button>`;
+      return;
+    }
+  }
+  paintLessonIntro(lesson, unit);
+}
+
+async function vocabBatch(code, unit, partLabel, exclude){
+  const l = LANG_CONFIG[code];
+  const lvl = unit.level || state.langs[code].level;
+  const exTxt = exclude.length ? `\nVermeide Dopplungen zu diesen bereits gelisteten Begriffen: ${exclude.slice(0,60).join(", ")}.` : "";
+  const sys = "Du bist Wortschatz-Didaktiker:in nach GER. Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Array, ohne Markdown, ohne Erklärtext.";
+  const usr = `Sprache: ${l.aiName}. Niveau: ${lvl}. Thema: "${unit.theme||unit.title}". ${partLabel}.
+Liste ALLE wesentlichen Vokabeln und Wendungen dieses Teils (typisch 16-22 Einträge), gegliedert über das Feld "cat".
+JSON-Array, jeder Eintrag: {"term":"<Wort/Phrase in ${l.aiName}, ggf. mit Artikel>","de":"<deutsche Bedeutung>","cat":"<Untergruppe auf Deutsch>"}.${exTxt}`;
+  const txt = await callAI(sys, [{role:"user",content:usr}], {maxTokens:2500});
+  return extractObjects(txt).filter(v=>v && v.term)
+    .map(v=>({ term:String(v.term), de:String(v.de||""), cat:String(v.cat||"Wortschatz") }));
+}
+
+async function generateVocab(code, unit){
+  const setLoad = (m)=>{ const b=document.getElementById("lessonBody"); if(b) b.innerHTML=loadingHTML(m); };
+  const parts = [
+    "Teil 1: zentrale Substantive des Themas",
+    "Teil 2: wichtige Verben und Adjektive des Themas",
+    "Teil 3: nützliche Wendungen, Redemittel und weiterer themenspezifischer Wortschatz"
+  ];
+  const seen = new Set(), all = [];
+  for(let i=0;i<parts.length;i++){
+    setLoad(`Stelle den Wortschatz zusammen (${i+1}/${parts.length}) …`);
+    let batch = [];
+    try{ batch = await vocabBatch(code, unit, parts[i], all.map(v=>v.term)); }catch(e){}
+    let added = 0;
+    batch.forEach(v=>{ const k=v.term.toLowerCase(); if(!seen.has(k)){ seen.add(k); all.push(v); added++; } });
+    if(i>=1 && added<4) break;   // genug Wortschatz beisammen
+  }
+  if(!all.length) throw new Error("Leere Vokabelliste");
+  // nach Gruppe clustern, Reihenfolge des ersten Auftretens beibehalten
+  const order=[], map={};
+  all.forEach(v=>{ const c=v.cat||"Wortschatz"; if(!map[c]){ map[c]=[]; order.push(c);} map[c].push(v); });
+  const out=[]; order.forEach(c=>map[c].forEach(v=>out.push(v)));
+  return out;
+}
+
+async function generateExercises(code, unit, vocab){
+  const l = LANG_CONFIG[code];
+  const lvl = unit.level || state.langs[code].level;
+  const terms = (vocab||[]).slice(0,40).map(v=>v.term+" = "+v.de).join("; ");
+  const sys = "Du erstellst Sprachübungen nach GER. Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Array, ohne Markdown, ohne Erklärtext.";
+  const usr = `Sprache: ${l.aiName}. Niveau: ${lvl}. Thema: "${unit.theme||unit.title}".
+Erstelle 10 abwechslungsreiche Übungen, die GENAU diesen Wortschatz testen: ${terms}
+JSON-Array. Erlaubte Typen:
+{"type":"mc","q":"Frage auf Deutsch","options":["<4 Optionen in ${l.aiName}>"],"answer":"<exakt eine der Optionen>","explain":"kurz Deutsch"}
+{"type":"translate","prompt":"<deutscher Satz oder Wort>","answer":"<Übersetzung in ${l.aiName}>","alts":["<optionale gleichwertige Lösung>"]}
+{"type":"fill","sentence":"<Satz in ${l.aiName} mit ___ als Lücke>","answer":"<Lückenwort in ${l.aiName}>","hint":"<Tipp auf Deutsch>"}
+{"type":"listen","text":"<kurzer Satz in ${l.aiName}>","options":["<4 deutsche Bedeutungen>"],"answer":"<exakt eine der Optionen>"}
+Mische die Typen. Bei "answer" muss der Wert exakt einem options-Eintrag entsprechen. Niveau ${lvl}.`;
+  const txt = await callAI(sys, [{role:"user",content:usr}], {maxTokens:3000});
+  const arr = extractObjects(txt).filter(e=>e && e.type);
+  if(!arr.length) throw new Error("Keine Übungen erhalten");
+  return arr;
+}
+
+async function generateScenarios(code, unit){
+  const l = LANG_CONFIG[code];
+  const lvl = unit.level || state.langs[code].level;
+  const sys = "Du entwirfst Gesprächssituationen für Sprachtraining. Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Array, ohne Markdown.";
+  const usr = `Sprache: ${l.aiName}. Niveau: ${lvl}. Thema: "${unit.theme||unit.title}".
+Entwirf 3 konkrete Gesprächssituationen zu genau diesem Thema, in denen die lernende Person den Themen-Wortschatz anwendet.
+JSON-Array, jeder Eintrag: {"t":"kurzer Titel auf Deutsch","d":"1 kurze deutsche Beschreibung","p":"Rollen-/Situationsanweisung auf Deutsch (wer bist du, wo sind wir, Ziel)"}.`;
+  const txt = await callAI(sys, [{role:"user",content:usr}], {maxTokens:1200});
+  let arr = extractObjects(txt).filter(s=>s && s.p);
+  if(!arr.length) arr = SCENARIOS[code].slice(0,3);
+  return arr.map(s=>({ t:s.t||"Gespräch", d:s.d||"", p:s.p }));
+}
+
+function paintLessonIntro(lesson, unit){
+  const code = view.lang, l = L(code);
+  // nach Gruppe rendern
+  let html = "", lastCat = null, first = true;
+  lesson.vocab.forEach(v=>{
+    const cat = v.cat || "Wortschatz";
+    if(cat!==lastCat){
+      lastCat = cat;
+      html += `<div class="vgroup-label${first?' first':''}">${esc(cat)}</div>`;
+      first = false;
+    }
+    html += `
+      <div class="vocab-row">
+        <div class="vocab-term">${esc(v.term)}
+          <button onclick="speak(${esc(JSON.stringify(v.term))},'${l.speak}')" aria-label="anhören">🔊</button>
+        </div>
+        <div class="vocab-de">${esc(v.de)}</div>
+      </div>`;
+  });
+  const done = state.langs[code].progress[unit.id]==="done";
+  document.getElementById("lessonBody").innerHTML = `
+    <div class="lesson-card">
+      <h3>Wortschatz <span class="vocab-count">· ${lesson.vocab.length} Einträge</span></h3>
+      ${html}
+    </div>
+    <button class="btn" onclick="startExercises()">Übungen starten</button>
+    <button class="btn ghost" style="margin-top:10px" onclick="startUnitConversation()">💬 Konversation zum Thema üben</button>
+    ${done?`<p class="hint" style="text-align:center;margin-top:12px">✓ Übungen dieser Einheit bereits abgeschlossen</p>`:""}
+  `;
+}
+
+async function startExercises(){
+  const code = view.lang, unitId = view.unitId;
+  const lesson = ensureLesson(code, unitId);
+  if(!lesson.exercises){
+    document.getElementById("lessonBody").innerHTML = loadingHTML("Erstelle Übungen zum Wortschatz …");
+    const unit = L(code).path.find(u=>u.id===unitId);
+    try{
+      lesson.exercises = await generateExercises(code, unit, lesson.vocab);
+      saveState();
+    }catch(e){
+      document.getElementById("lessonBody").innerHTML =
+        `<div class="err">Übungen konnten nicht geladen werden.<br>${esc(e.message)}</div>
+         <button class="btn ghost" onclick="renderLesson()">Zurück</button>`;
+      return;
+    }
+  }
+  lessonRT = { ex:lesson.exercises, step:0, correct:0, answered:false };
+  paintExercise();
+}
+
+async function startUnitConversation(){
+  const code = view.lang, unitId = view.unitId;
+  const lesson = ensureLesson(code, unitId);
+  if(!lesson.scenarios){
+    document.getElementById("lessonBody").innerHTML = loadingHTML("Bereite Gesprächssituationen vor …");
+    const unit = L(code).path.find(u=>u.id===unitId);
+    try{
+      lesson.scenarios = await generateScenarios(code, unit);
+      saveState();
+    }catch(e){
+      lesson.scenarios = SCENARIOS[code].slice(0,3);
+    }
+  }
+  go("call", { lang:code, unitId });
+}
+
+function paintExercise(){
+  const code = view.lang, l = L(code);
+  const rt = lessonRT, ex = rt.ex[rt.step];
+  const dots = rt.ex.map((_,i)=>`<i class="${i<=rt.step?'on':''}"></i>`).join("");
+  let bodyHTML = "";
+
+  if(ex.type==="mc" || ex.type==="listen"){
+    const prompt = ex.type==="listen" ? "Hörverstehen" : "Wähle die richtige Antwort";
+    const qHTML = ex.type==="listen"
+      ? `<div class="q-text"><button class="btn soft sm" onclick="speak(${esc(JSON.stringify(ex.text))},'${l.speak}')">🔊 Nochmal hören</button></div>
+         <p style="color:var(--ink-soft);font-size:14px;margin:-8px 0 16px;">Was bedeutet der Satz?</p>`
+      : `<div class="q-text">${esc(ex.q)}</div>`;
+    const opts = (ex.options||[]).map((o,i)=>`<button class="opt" data-i="${i}" onclick="answerMC(${i})">${esc(o)}</button>`).join("");
+    bodyHTML = `<p class="q-prompt">${prompt}</p>${qHTML}<div id="opts">${opts}</div>`;
+    if(ex.type==="listen") setTimeout(()=>speak(ex.text, l.speak), 350);
+  }
+  else if(ex.type==="translate" || ex.type==="fill"){
+    const prompt = ex.type==="translate" ? "Übersetze ins "+l.name : "Ergänze die Lücke";
+    const q = ex.type==="translate" ? esc(ex.prompt) : esc(ex.sentence);
+    const cls = ex.type==="fill" ? "q-text target" : "q-text";
+    bodyHTML = `
+      <p class="q-prompt">${prompt}</p>
+      <div class="${cls}">${q}</div>
+      <input class="ans-input" id="ansInput" placeholder="${ex.type==='fill'?'Lückenwort':'Deine Übersetzung'}…" autocomplete="off" autocapitalize="off" autocorrect="off"
+        onkeydown="if(event.key==='Enter')submitText()">
+      ${ex.hint?`<p style="font-size:13px;color:var(--ink-faint);margin-top:8px;">💡 ${esc(ex.hint)}</p>`:""}
+      <button class="btn" style="margin-top:18px" onclick="submitText()">Prüfen</button>
+    `;
+  }
+
+  app().innerHTML = `
+    <button class="back" onclick="quitExercises()">‹ Abbrechen</button>
+    <div class="ex-progress">${dots}</div>
+    <p style="font-size:13px;color:var(--ink-faint);margin:0 0 16px;">Übung ${rt.step+1} von ${rt.ex.length}</p>
+    <div id="exBody">${bodyHTML}</div>
+    <div id="exFeedback"></div>
+  `;
+}
+
+function answerMC(i){
+  if(lessonRT.answered) return;
+  lessonRT.answered = true;
+  const ex = lessonRT.ex[lessonRT.step];
+  const correctIdx = (ex.options||[]).findIndex(o=>norm(o)===norm(ex.answer));
+  const ok = i===correctIdx;
+  document.querySelectorAll(".opt").forEach((b,bi)=>{
+    b.onclick=null;
+    if(bi===correctIdx) b.classList.add("correct");
+    else if(bi===i) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  showFeedback(ok, ex.answer, ex.explain);
+}
+
+function submitText(){
+  if(lessonRT.answered) return;
+  const ex = lessonRT.ex[lessonRT.step];
+  const val = (document.getElementById("ansInput").value||"").trim();
+  if(!val){ toast("Bitte etwas eintippen"); return; }
+  lessonRT.answered = true;
+  const candidates = [ex.answer, ...(ex.alts||[])].filter(Boolean);
+  const ok = candidates.some(c=>norm(c)===norm(val) || stripAccents(norm(c))===stripAccents(norm(val)));
+  const inp = document.getElementById("ansInput");
+  inp.style.borderColor = ok ? "var(--ok)" : "var(--bad)";
+  inp.disabled = true;
+  showFeedback(ok, ex.answer, ex.explain);
+}
+
+function showFeedback(ok, answer, explain){
+  if(ok) lessonRT.correct++;
+  const code = view.lang, l = L(code);
+  const last = lessonRT.step === lessonRT.ex.length-1;
+  const fb = document.getElementById("exFeedback");
+  fb.innerHTML = `
+    <div class="feedback ${ok?'ok':'no'}">
+      <b>${ok?'Richtig! 🎉':'Nicht ganz'}</b>
+      ${!ok?`Richtig wäre: <strong>${esc(answer)}</strong><br>`:''}
+      ${explain?esc(explain):''}
+      ${!ok?`<button class="btn soft sm" style="margin-top:10px" onclick="speak(${esc(JSON.stringify(answer))},'${l.speak}')">🔊 anhören</button>`:''}
+    </div>
+    <button class="btn" style="margin-top:14px" onclick="nextExercise()">${last?'Lektion abschließen':'Weiter'}</button>
+  `;
+  fb.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function nextExercise(){
+  if(lessonRT.step < lessonRT.ex.length-1){
+    lessonRT.step++; lessonRT.answered=false; paintExercise();
+  }else{
+    finishLesson();
+  }
+}
+function quitExercises(){ stopSpeak(); go("lesson", {lang:view.lang, unitId:view.unitId}); }
+
+function finishLesson(){
+  stopSpeak();
+  const code = view.lang, l = state.langs[code];
+  const total = lessonRT.ex.length;
+  const score = lessonRT.correct/total;
+  const firstTime = l.progress[view.unitId] !== "done";
+  l.progress[view.unitId] = "done";
+  if(firstTime) l.xp += 20 + Math.round(score*30);
+  // gleitender Mastery-Wert
+  l.mastery = +(l.mastery*0.6 + score*0.4).toFixed(3);
+  saveState();
+
+  const lvlSuggest = suggestLevel(code);
+  app().innerHTML = `
+    <div style="text-align:center;padding:40px 0;">
+      <div style="font-size:64px;margin-bottom:8px;">${score>=0.8?'🌟':score>=0.5?'👍':'💪'}</div>
+      <h1 class="page-title">Lektion geschafft</h1>
+      <p class="page-sub">${lessonRT.correct} von ${total} richtig · +${firstTime?(20+Math.round(score*30)):0} XP</p>
+      <div class="lesson-card" style="text-align:left;">
+        <div class="vocab-row"><span>Trefferquote</span><b>${Math.round(score*100)}%</b></div>
+        <div class="vocab-row"><span>Gesamtfortschritt (Mastery)</span><b>${Math.round(l.mastery*100)}%</b></div>
+      </div>
+      ${lvlSuggest?`<div class="grammar-note" style="text-align:left;margin-bottom:16px;">${lvlSuggest.msg}
+        <button class="btn sm" style="margin-top:10px" onclick="applyLevel('${code}','${lvlSuggest.level}')">Auf ${lvlSuggest.level} wechseln</button></div>`:""}
+      <button class="btn" onclick="startUnitConversation()">💬 Konversation zum Thema</button>
+      <button class="btn ghost" style="margin-top:10px" onclick="go('path',{lang:'${code}'})">Weiter im Lernpfad</button>
+    </div>
+  `;
+}
+
+/* Niveau-Adaption: Vorschlag auf Basis von Mastery */
+function suggestLevel(code){
+  const l = state.langs[code];
+  const idx = LEVELS.indexOf(l.level);
+  const doneCount = Object.values(l.progress).filter(s=>s==="done").length;
+  if(l.mastery>0.85 && idx<LEVELS.length-1 && doneCount>=2){
+    return { level:LEVELS[idx+1], msg:`Stark — deine Trefferquote ist hoch. Bereit für Niveau <b>${LEVELS[idx+1]}</b>?` };
+  }
+  if(l.mastery<0.4 && idx>0){
+    return { level:LEVELS[idx-1], msg:`Das war fordernd. Möchtest du auf <b>${LEVELS[idx-1]}</b> wechseln, um sicherer zu werden?` };
+  }
+  return null;
+}
+function applyLevel(code, level){
+  state.langs[code].level = level;
+  state.langs[code].path = null;       // neuen Pfad fürs neue Niveau erzeugen
+  state.langs[code].progress = {};
+  state.langs[code].lessons = {};
+  state.langs[code].mastery = 0.5;
+  saveState();
+  toast("Niveau auf "+level+" gesetzt");
+  go("path", {lang:code});
+}
+
+/* =========================================================
+   VOKABELTRAINER (Spaced Repetition)
+   srs[key] = { ease, interval(Tage), reps, lapses, due(ts) }
+   clozeCache[key] = { cloze, answer, de }
+   ========================================================= */
+const DAY = 86400000;
+let vocabRT = null; // {code, mode, queue, pos, reviewed, correct}
+
+function srsStore(code){ return state.langs[code].srs || (state.langs[code].srs = {}); }
+function clozeStore(code){ return state.langs[code].clozeCache || (state.langs[code].clozeCache = {}); }
+function srsKey(term){ return norm(term); }
+
+/* Alle freigeschalteten Vokabeln einer Sprache, dedupliziert */
+function buildVocabPool(code){
+  const lessons = state.langs[code].lessons || {};
+  const seen = new Set(), pool = [];
+  for(const k in lessons){
+    const v = lessons[k] && lessons[k].vocab;
+    if(!Array.isArray(v)) continue;
+    v.forEach(it=>{
+      const key = srsKey(it.term);
+      if(it.term && !seen.has(key)){ seen.add(key); pool.push({ term:it.term, de:it.de, cat:it.cat||"" }); }
+    });
+  }
+  return pool;
+}
+function getRec(code, term){ return srsStore(code)[srsKey(term)] || null; }
+
+function scheduleRec(code, term, grade){
+  const s = srsStore(code), k = srsKey(term);
+  let r = s[k] || { ease:2.3, interval:0, reps:0, lapses:0, due:0 };
+  const now = Date.now();
+  if(grade==="again"){
+    r.reps = 0; r.lapses++; r.ease = Math.max(1.3, r.ease - 0.2); r.interval = 0; r.due = now;
+  }else{
+    r.reps++;
+    if(r.reps===1) r.interval = (grade==="easy") ? 3 : 1;
+    else if(r.reps===2) r.interval = (grade==="easy") ? 7 : 3;
+    else r.interval = Math.round(r.interval * r.ease * (grade==="hard"?0.7 : grade==="easy"?1.3 : 1));
+    if(grade==="hard") r.ease = Math.max(1.3, r.ease - 0.15);
+    if(grade==="easy") r.ease = r.ease + 0.15;
+    r.interval = Math.max(1, r.interval);
+    r.due = now + r.interval*DAY;
+  }
+  s[k] = r; return r;
+}
+
+function vocabStats(code){
+  const pool = buildVocabPool(code), now = Date.now();
+  let due=0, fresh=0, mastered=0;
+  pool.forEach(v=>{
+    const r = getRec(code, v.term);
+    if(!r) fresh++;
+    else { if(r.due<=now) due++; if(r.interval>=21) mastered++; }
+  });
+  return { total:pool.length, due, fresh, mastered };
+}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function renderVocab(){
+  const code = view.lang, l = L(code);
+  const st = vocabStats(code);
+  app().innerHTML = `
+    <button class="back" onclick="go('path',{lang:'${code}'})">‹ ${esc(l.name)}</button>
+    <h1 class="page-title">Vokabeltrainer</h1>
+    <p class="page-sub">Spaced Repetition · ${l.name}</p>
+    <div id="vocabBody"></div>
+  `;
+  const body = document.getElementById("vocabBody");
+  if(st.total===0){
+    body.innerHTML = `<div class="lesson-card" style="text-align:center;">
+      <p style="margin:0;color:var(--ink-soft);font-size:14.5px;">Noch keine Vokabeln gesammelt. Öffne im Lernpfad ein paar Einheiten — der dort geladene Wortschatz landet automatisch hier im Trainer.</p>
+    </div>
+    <button class="btn" onclick="go('path',{lang:'${code}'})">Zum Lernpfad</button>`;
+    return;
+  }
+  body.innerHTML = `
+    <div class="vstats">
+      <div class="vstat"><b>${st.total}</b><span>WÖRTER</span></div>
+      <div class="vstat"><b style="color:var(--accent)">${st.due}</b><span>FÄLLIG</span></div>
+      <div class="vstat"><b>${st.fresh}</b><span>NEU</span></div>
+      <div class="vstat"><b style="color:var(--ok)">${st.mastered}</b><span>GEFESTIGT</span></div>
+    </div>
+    <button class="btn" onclick="startVocabSession('mixed')">${st.due>0?`${st.due} fällige üben`:'Üben starten'} →</button>
+    <p class="eyebrow" style="margin:24px 0 12px">Methode wählen</p>
+    <button class="mode-btn" onclick="startVocabSession('flash')"><span class="mi">🎴</span><div><div class="mt">Karteikarten</div><div class="md">Umdrehen und selbst bewerten</div></div></button>
+    <button class="mode-btn" onclick="startVocabSession('mc')"><span class="mi">🔤</span><div><div class="mt">Multiple Choice</div><div class="md">Richtige Bedeutung wählen</div></div></button>
+    <button class="mode-btn" onclick="startVocabSession('write')"><span class="mi">⌨️</span><div><div class="mt">Schreiben</div><div class="md">Übersetzung eintippen</div></div></button>
+    <button class="mode-btn" onclick="startVocabSession('cloze')"><span class="mi">📝</span><div><div class="mt">Lückentext</div><div class="md">Wort im Beispielsatz ergänzen</div></div></button>
+    <button class="mode-btn" onclick="startVocabSession('listen')"><span class="mi">🎧</span><div><div class="mt">Hören</div><div class="md">Gesprochenes Wort zuordnen</div></div></button>
+  `;
+}
+
+function buildSession(code, limit){
+  const pool = buildVocabPool(code), now = Date.now();
+  const due=[], fresh=[], later=[];
+  pool.forEach(v=>{ const r=getRec(code,v.term); if(!r) fresh.push(v); else if(r.due<=now) due.push(v); else later.push(v); });
+  shuffle(due); shuffle(fresh); shuffle(later);
+  let q = due.concat(fresh).slice(0, limit);
+  if(q.length<limit) q = q.concat(later).slice(0, limit);
+  return q.map(v=>({ ...v, _again:0, _mode:null, _done:false }));
+}
+
+async function startVocabSession(mode){
+  const code = view.lang;
+  const queue = buildSession(code, 20);
+  if(!queue.length){ toast("Keine Vokabeln verfügbar"); return; }
+  vocabRT = { code, mode, queue, pos:0, reviewed:0, correct:0 };
+  if(mode==="cloze" || mode==="mixed"){
+    const b = document.getElementById("vocabBody");
+    if(b) b.innerHTML = loadingHTML("Bereite Beispielsätze vor …");
+    await prefetchCloze(code, queue);
+  }
+  paintVocabCard();
+}
+
+async function prefetchCloze(code, cards){
+  const cache = clozeStore(code);
+  const need = cards.filter(c=>!cache[srsKey(c.term)]).slice(0,16);
+  if(!need.length) return;
+  const l = LANG_CONFIG[code];
+  const list = need.map(c=>c.term).join("; ");
+  const sys = "Du erstellst Lückentext-Beispielsätze für Sprachlernende. Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Array, ohne Markdown.";
+  const usr = `Sprache: ${l.aiName}. Erstelle für JEDES dieser Wörter einen einfachen, natürlichen Beispielsatz: ${list}.
+JSON-Array, jeder Eintrag: {"term":"<Wort exakt wie vorgegeben>","cloze":"<Satz in ${l.aiName}, in dem genau dieses Wort durch ___ ersetzt ist>","answer":"<das entfernte Wort in seiner Satzform>","de":"<deutsche Übersetzung des vollständigen Satzes>"}.`;
+  try{
+    const txt = await callAI(sys, [{role:"user",content:usr}], {maxTokens:3000});
+    extractObjects(txt).forEach(o=>{
+      if(o && o.term && o.cloze) cache[srsKey(o.term)] = { cloze:String(o.cloze), answer:String(o.answer||o.term), de:String(o.de||"") };
+    });
+    saveState();
+  }catch(e){}
+}
+
+function pickMode(code, card){
+  if(vocabRT.mode!=="mixed") return vocabRT.mode;
+  const opts = ["mc","write","listen"];
+  if(clozeStore(code)[srsKey(card.term)]) opts.push("cloze");
+  return opts[Math.floor(Math.random()*opts.length)];
+}
+
+function distractors(code, correctDe, n){
+  const pool = buildVocabPool(code).map(v=>v.de).filter(d=>d && norm(d)!==norm(correctDe));
+  shuffle(pool);
+  const out=[]; const seen=new Set([norm(correctDe)]);
+  for(const d of pool){ const k=norm(d); if(!seen.has(k)){ seen.add(k); out.push(d); } if(out.length>=n) break; }
+  return out;
+}
+
+function paintVocabCard(){
+  const rt = vocabRT, code = rt.code, l = L(code);
+  if(rt.pos>=rt.queue.length){ finishVocab(); return; }
+  const card = rt.queue[rt.pos];
+  if(!card._mode) card._mode = pickMode(code, card);
+  const m = card._mode;
+  const remaining = rt.queue.length - rt.pos;
+  let body = "";
+
+  if(m==="flash"){
+    body = `
+      <div class="flashcard">
+        <div class="fc-cat">${esc(card.cat||"")}</div>
+        <div class="fc-term">${esc(card.term)} <button onclick="speak(${esc(JSON.stringify(card.term))},'${l.speak}')" style="font-size:18px">🔊</button></div>
+        <div id="fcReveal"></div>
+      </div>
+      <button class="btn" id="fcFlip" onclick="flipFlash()">Umdrehen</button>`;
+  }
+  else if(m==="mc" || m==="listen"){
+    const opts = shuffle([card.de, ...distractors(code, card.de, 3)]);
+    const head = m==="listen"
+      ? `<div class="q-text"><button class="btn soft sm" onclick="speak(${esc(JSON.stringify(card.term))},'${l.speak}')">🔊 Wort anhören</button></div>
+         <p style="color:var(--ink-soft);font-size:14px;margin:-8px 0 16px;">Was bedeutet das Wort?</p>`
+      : `<div class="q-text target">${esc(card.term)}</div>`;
+    body = `<p class="q-prompt">${m==="listen"?"Hören":"Bedeutung wählen"}</p>${head}
+      <div id="opts">${opts.map(o=>`<button class="opt" onclick="answerVocabMC(this, ${esc(JSON.stringify(o))})">${esc(o)}</button>`).join("")}</div>`;
+    if(m==="listen") setTimeout(()=>speak(card.term, l.speak), 350);
+  }
+  else if(m==="write"){
+    body = `<p class="q-prompt">Übersetze ins ${l.name}</p>
+      <div class="q-text">${esc(card.de)}</div>
+      <input class="ans-input" id="vAns" placeholder="Wort auf ${l.name}…" autocomplete="off" autocapitalize="off" autocorrect="off"
+        onkeydown="if(event.key==='Enter')submitVocabWrite()">
+      <button class="btn" style="margin-top:18px" onclick="submitVocabWrite()">Prüfen</button>`;
+  }
+  else if(m==="cloze"){
+    const c = clozeStore(code)[srsKey(card.term)];
+    if(!c){ card._mode="write"; paintVocabCard(); return; }
+    body = `<p class="q-prompt">Lücke ergänzen</p>
+      <div class="q-text target">${esc(c.cloze)}</div>
+      ${c.de?`<p style="font-size:13px;color:var(--ink-faint);margin:-8px 0 14px">${esc(c.de)}</p>`:""}
+      <input class="ans-input" id="vAns" placeholder="fehlendes Wort…" autocomplete="off" autocapitalize="off" autocorrect="off"
+        onkeydown="if(event.key==='Enter')submitVocabCloze()">
+      <button class="btn" style="margin-top:18px" onclick="submitVocabCloze()">Prüfen</button>`;
+  }
+
+  app().innerHTML = `
+    <button class="back" onclick="quitVocab()">‹ Beenden</button>
+    <div class="vbar-top" style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div class="bar" style="flex:1;--lc:var(--accent)"><i style="width:${Math.round(rt.pos/rt.queue.length*100)}%"></i></div>
+      <span class="hint">${remaining} übrig</span>
+    </div>
+    <div id="vBody">${body}</div>
+    <div id="vFeedback"></div>
+  `;
+}
+
+function flipFlash(){
+  const code = vocabRT.code, card = vocabRT.queue[vocabRT.pos];
+  document.getElementById("fcReveal").innerHTML = `<div class="fc-divider"></div><div class="fc-back">${esc(card.de)}</div>`;
+  const flip = document.getElementById("fcFlip");
+  flip.outerHTML = `<div class="grade-row">
+      <button class="again" onclick="gradeVocab('again')">Nochmal</button>
+      <button class="good" onclick="gradeVocab('good')">Gut</button>
+      <button class="easy" onclick="gradeVocab('easy')">Leicht</button>
+    </div>`;
+}
+
+function answerVocabMC(btn, choice){
+  const card = vocabRT.queue[vocabRT.pos];
+  const ok = norm(choice)===norm(card.de);
+  document.querySelectorAll("#opts .opt").forEach(b=>{
+    b.onclick=null;
+    if(norm(b.textContent)===norm(card.de)) b.classList.add("correct");
+    else if(b===btn) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  vocabFeedback(ok, card.de, ok?null:`${card.term} = ${card.de}`);
+}
+
+function submitVocabWrite(){
+  const card = vocabRT.queue[vocabRT.pos];
+  const val = (document.getElementById("vAns").value||"").trim();
+  if(!val){ toast("Bitte etwas eintippen"); return; }
+  const ok = norm(val)===norm(card.term) || stripAccents(norm(val))===stripAccents(norm(card.term));
+  const inp = document.getElementById("vAns"); inp.disabled=true; inp.style.borderColor = ok?"var(--ok)":"var(--bad)";
+  vocabFeedback(ok, card.term, ok?null:`Richtig: ${card.term}`);
+}
+
+function submitVocabCloze(){
+  const code = vocabRT.code, card = vocabRT.queue[vocabRT.pos];
+  const c = clozeStore(code)[srsKey(card.term)];
+  const ans = (c && c.answer) || card.term;
+  const val = (document.getElementById("vAns").value||"").trim();
+  if(!val){ toast("Bitte etwas eintippen"); return; }
+  const ok = norm(val)===norm(ans) || stripAccents(norm(val))===stripAccents(norm(ans));
+  const inp = document.getElementById("vAns"); inp.disabled=true; inp.style.borderColor = ok?"var(--ok)":"var(--bad)";
+  vocabFeedback(ok, ans, ok?null:`Richtig: ${ans}`);
+}
+
+function vocabFeedback(ok, answer, note){
+  const l = L(vocabRT.code);
+  const fb = document.getElementById("vFeedback");
+  fb.innerHTML = `
+    <div class="feedback ${ok?'ok':'no'}">
+      <b>${ok?'Richtig! 🎉':'Nicht ganz'}</b>
+      ${note?esc(note):''}
+      <button class="btn soft sm" style="margin-top:10px" onclick="speak(${esc(JSON.stringify(answer))},'${l.speak}')">🔊 anhören</button>
+    </div>
+    <button class="btn" style="margin-top:14px" onclick="gradeVocab('${ok?'good':'again'}')">Weiter</button>`;
+  fb.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function gradeVocab(grade){
+  const rt = vocabRT, code = rt.code, card = rt.queue[rt.pos];
+  scheduleRec(code, card.term, grade);
+  rt.reviewed++;
+  if(grade!=="again") rt.correct++;
+  // bei "Nochmal" Karte später in der Session erneut zeigen (max 2x)
+  if(grade==="again" && card._again < 2){
+    const again = { ...card, _again:card._again+1, _mode:null, _done:false };
+    rt.queue.splice(Math.min(rt.queue.length, rt.pos + 4), 0, again);
+  }
+  saveState();
+  rt.pos++;
+  stopSpeak();
+  paintVocabCard();
+}
+
+function quitVocab(){ stopSpeak(); vocabRT=null; go("vocab",{lang:view.lang}); }
+
+function finishVocab(){
+  stopSpeak();
+  const rt = vocabRT, code = rt.code;
+  const acc = rt.reviewed ? Math.round(rt.correct/rt.reviewed*100) : 0;
+  const st = vocabStats(code);
+  vocabRT = null;
+  app().innerHTML = `
+    <div style="text-align:center;padding:44px 0;">
+      <div style="font-size:60px;margin-bottom:8px;">${acc>=80?'🌟':acc>=50?'👍':'💪'}</div>
+      <h1 class="page-title">Session beendet</h1>
+      <p class="page-sub">${rt.reviewed} Karten · ${acc}% richtig</p>
+      <div class="lesson-card" style="text-align:left;">
+        <div class="vocab-row"><span>Noch fällig</span><b>${st.due}</b></div>
+        <div class="vocab-row"><span>Gefestigt insgesamt</span><b>${st.mastered}</b></div>
+      </div>
+      ${st.due>0?`<button class="btn" onclick="startVocabSession('mixed')">Weiterüben (${st.due} fällig)</button>`:`<button class="btn" onclick="go('vocab',{lang:'${code}'})">Zur Übersicht</button>`}
+      <button class="btn ghost" style="margin-top:10px" onclick="go('path',{lang:'${code}'})">Zum Lernpfad</button>
+    </div>
+  `;
+}
+
+/* =========================================================
+   CALL MODE
+   ========================================================= */
+const SCENARIOS = {
+  es:[
+    {t:"Im Café",d:"Bestellen, fragen, plaudern",p:"Wir sind in einem Café in Madrid. Du bist die Kellnerin/der Kellner."},
+    {t:"Sich vorstellen",d:"Kennenlernen, Smalltalk",p:"Wir treffen uns das erste Mal auf einer Party und lernen uns kennen."},
+    {t:"Nach dem Weg fragen",d:"Orientierung in der Stadt",p:"Ich bin Tourist:in und frage dich nach dem Weg."},
+    {t:"Freies Gespräch",d:"Worüber du willst",p:"Wir führen ein lockeres Alltagsgespräch."}
+  ],
+  fr:[
+    {t:"Au café",d:"Commander et bavarder",p:"Nous sommes dans un café à Paris. Tu es le serveur / la serveuse."},
+    {t:"Se présenter",d:"Faire connaissance",p:"On se rencontre pour la première fois et on fait connaissance."},
+    {t:"Demander son chemin",d:"S'orienter en ville",p:"Je suis touriste et je te demande mon chemin."},
+    {t:"Conversation libre",d:"Au choix",p:"On a une conversation détendue du quotidien."}
+  ],
+  sv:[
+    {t:"På kafé",d:"Beställa och prata",p:"Vi är på ett kafé i Stockholm. Du är servitören."},
+    {t:"Presentera sig",d:"Lära känna varandra",p:"Vi träffas för första gången och lär känna varandra."},
+    {t:"Fråga om vägen",d:"Hitta i staden",p:"Jag är turist och frågar dig om vägen."},
+    {t:"Fritt samtal",d:"Vad du vill",p:"Vi har ett avslappnat vardagssamtal."}
+  ]
+};
+
+let callScenarios = null;
+
+function resolveScenarios(code){
+  if(view.unitId){
+    const lesson = state.langs[code].lessons[view.unitId];
+    if(lesson && lesson.scenarios && lesson.scenarios.length) return lesson.scenarios;
+  }
+  return SCENARIOS[code];
+}
+
+function renderCall(){
+  const code = view.lang, l = L(code);
+  setAccent(code);
+  if(!call){
+    callScenarios = resolveScenarios(code);
+    const unit = view.unitId ? l.path.find(u=>u.id===view.unitId) : null;
+    const scs = callScenarios.map((s,i)=>`
+      <button onclick="startCall(${i})"><b>${esc(s.t)}</b><span>${esc(s.d)}</span></button>`).join("");
+    app().innerHTML = `
+      <div class="call-screen">
+        <div class="call-top">
+          <div class="call-who">${l.flag} ${unit?esc(unit.title):l.name}<small>Call Mode · Niveau ${l.level}</small></div>
+          <button class="call-end" onclick="endCall()" aria-label="schließen">✕</button>
+        </div>
+        <div class="call-stage">
+          <div class="orb">📞</div>
+          <div class="call-line">${unit?'Wähle eine Situation zum Thema':'Worüber möchtest du sprechen?'}</div>
+          <div class="scenario-pick">${scs}</div>
+        </div>
+      </div>`;
+    return;
+  }
+  paintCallStage();
+}
+
+async function startCall(scIdx){
+  const code = view.lang, l = L(code);
+  const list = callScenarios || resolveScenarios(code);
+  const sc = list[scIdx];
+  call = { code, scenario:sc, messages:[], line:"…", status:"verbindet …", correction:null, busy:true, listening:false };
+  paintCallStage();
+  const sys = callSystemPrompt(l, sc);
+  try{
+    const txt = await callAI(sys, [{role:"user",content:"(Das Gespräch beginnt. Begrüße mich kurz und stelle eine einfache Einstiegsfrage.)"}], {maxTokens:400});
+    handleTutorReply(txt);
+  }catch(e){
+    call.status = "Fehler: "+e.message; call.busy=false; paintCallStage();
+  }
+}
+
+function callSystemPrompt(l, sc){
+  return `Du bist ein freundlicher, geduldiger ${l.aiName}-Gesprächspartner für eine:n Lernende:n auf Niveau ${l.level} (GER).
+SZENARIO: ${sc.p}
+REGELN:
+- Sprich AUSSCHLIESSLICH ${l.aiName}, passend zu Niveau ${l.level} (kurze, klare Sätze).
+- Antworte mit maximal 1-2 kurzen Sätzen und stelle meist eine Rückfrage, damit das Gespräch läuft.
+- Wenn die lernende Person einen deutlichen Fehler macht, hänge GANZ AM ENDE eine separate Zeile an, die exakt so beginnt: "KORREKTUR: " gefolgt von einer kurzen Erklärung AUF DEUTSCH (richtige Form + Mini-Begründung). Mache das nur bei echten Fehlern, nicht bei jeder Nachricht.
+- Bleib im Szenario und in der Rolle.`;
+}
+
+function handleTutorReply(txt){
+  let correction = null;
+  let line = txt;
+  const m = txt.match(/KORREKTUR:\s*([\s\S]*)$/i);
+  if(m){ correction = m[1].trim(); line = txt.slice(0, m.index).trim(); }
+  call.line = line || "…";
+  call.correction = correction;
+  call.messages.push({role:"assistant", content:txt});
+  call.busy = false;
+  call.status = "spricht …";
+  paintCallStage();
+  // sprechen
+  const orb = document.querySelector(".orb");
+  if(orb) orb.classList.add("speaking");
+  speak(line, LANG_CONFIG[call.code].speak, ()=>{
+    const o = document.querySelector(".orb"); if(o) o.classList.remove("speaking");
+    if(call) { call.status = "Du bist dran"; const s=document.querySelector(".call-status"); if(s) s.textContent=call.status; }
+  });
+}
+
+function paintCallStage(){
+  const code = call.code, l = L(code);
+  const stt = sttAvailable();
+  app().innerHTML = `
+    <div class="call-screen">
+      <div class="call-top">
+        <div class="call-who">${l.flag} ${esc(call.scenario.t)}<small>${l.name} · Niveau ${l.level}</small></div>
+        <button class="call-end" onclick="endCall()" aria-label="auflegen">✕</button>
+      </div>
+      <div class="call-stage">
+        <div class="orb ${call.busy?'':''}">${call.busy?'<div class="spin" style="border-top-color:#fff;border-color:rgba(255,255,255,.3);border-top-color:#fff;"></div>':'🗣️'}</div>
+        <div class="call-line">${call.busy?'…':esc(call.line)}</div>
+        ${call.correction?`<div class="correction"><b>Korrektur</b>${esc(call.correction)}</div>`:''}
+        <div class="call-status">${esc(call.status||'')}</div>
+      </div>
+      <div class="call-controls">
+        ${call.line && !call.busy ? `<button class="btn soft sm" style="background:rgba(255,255,255,.14);color:#fff;align-self:center;width:auto;" onclick="replayLine()">🔊 Wiederholen</button>`:''}
+        <div class="call-row">
+          ${stt
+            ? `<button class="mic ${call.listening?'live':''}" id="micBtn" onclick="toggleMic()">${call.listening?'⏹ Zuhören…':'🎤 Antippen & sprechen'}</button>`
+            : ``}
+        </div>
+        <div class="call-row">
+          <input class="call-textin" id="callText" placeholder="${stt?'… oder hier tippen':'Tippe deine Antwort'}" autocomplete="off" autocapitalize="off"
+            onkeydown="if(event.key==='Enter')sendCallText()">
+          <button class="mic-icon" onclick="sendCallText()" aria-label="senden">➤</button>
+        </div>
+        ${!stt?`<p style="opacity:.6;font-size:12px;text-align:center;margin:2px 0 0;">Spracherkennung in diesem Browser/Fenster nicht verfügbar — tippe deine Antwort. Auf dem iPhone-Homescreen (PWA) funktioniert das Mikrofon.</p>`:''}
+      </div>
+    </div>`;
+}
+
+function replayLine(){
+  if(!call || !call.line) return;
+  const orb=document.querySelector(".orb"); if(orb) orb.classList.add("speaking");
+  speak(call.line, LANG_CONFIG[call.code].speak, ()=>{ const o=document.querySelector(".orb"); if(o)o.classList.remove("speaking"); });
+}
+
+let recog = null;
+function toggleMic(){
+  if(call.listening){ stopMic(); return; }
+  if(!SR){ toast("Spracherkennung nicht verfügbar"); return; }
+  stopSpeak();
+  recog = new SR();
+  recog.lang = LANG_CONFIG[call.code].speak;
+  recog.interimResults = false;
+  recog.maxAlternatives = 1;
+  call.listening = true;
+  const orb=document.querySelector(".orb"); if(orb){orb.classList.remove("speaking");orb.classList.add("listening");}
+  const btn=document.getElementById("micBtn"); if(btn){btn.classList.add("live");btn.textContent="⏹ Zuhören…";}
+  const st=document.querySelector(".call-status"); if(st) st.textContent="Ich höre zu …";
+  recog.onresult = (e)=>{
+    const text = e.results[0][0].transcript;
+    call.listening=false;
+    sendUserTurn(text);
+  };
+  recog.onerror = (e)=>{ call.listening=false; resetMicUI(); if(e.error!=="aborted") toast("Konnte nicht hören — bitte tippen"); };
+  recog.onend = ()=>{ call.listening=false; resetMicUI(); };
+  try{ recog.start(); }catch(e){ call.listening=false; resetMicUI(); }
+}
+function stopMic(){ if(recog){ try{recog.stop();}catch(e){} } call.listening=false; resetMicUI(); }
+function resetMicUI(){
+  const orb=document.querySelector(".orb"); if(orb) orb.classList.remove("listening");
+  const btn=document.getElementById("micBtn"); if(btn){btn.classList.remove("live");btn.textContent="🎤 Antippen & sprechen";}
+}
+
+function sendCallText(){
+  const inp=document.getElementById("callText");
+  const v=(inp.value||"").trim();
+  if(!v) return;
+  inp.value="";
+  sendUserTurn(v);
+}
+
+async function sendUserTurn(text){
+  if(!call || call.busy) return;
+  stopMic(); stopSpeak();
+  call.messages.push({role:"user", content:text});
+  call.busy=true; call.correction=null; call.line="…"; call.status="denkt nach …";
+  paintCallStage();
+  const l = L(call.code);
+  const sys = callSystemPrompt(l, call.scenario);
+  try{
+    const txt = await callAI(sys, call.messages.slice(-12), {maxTokens:400});
+    handleTutorReply(txt);
+  }catch(e){
+    call.busy=false; call.status="Fehler: "+e.message; paintCallStage();
+  }
+}
+
+function endCall(){
+  stopSpeak(); stopMic();
+  const code = call ? call.code : view.lang;
+  if(call){ state.langs[code].xp += 5; saveState(); }
+  call=null;
+  go("path",{lang:code});
+}
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+function voiceField(code){
+  const l = L(code);
+  const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  const base = l.speak.split("-")[0].toLowerCase();
+  const matches = vs.filter(v=>v.lang.toLowerCase().startsWith(base));
+  const auto = pickVoice(l.speak);
+  let opts = `<option value="">Automatisch${auto?` — ${esc(auto.name)}`:""}</option>`;
+  opts += matches.map(v=>`<option value="${esc(v.voiceURI)}" ${l.voiceURI===v.voiceURI?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join("");
+  const none = matches.length ? "" : `<p class="hint">Noch keine ${esc(l.name)}-Stimme auf dem Gerät — siehe Hinweis unten zum Nachladen.</p>`;
+  return `
+    <div class="field">
+      <label>${l.flag} ${l.name}</label>
+      <div class="call-row" style="gap:8px;">
+        <select id="voice-${code}" onchange="setVoice('${code}', this.value)" style="flex:1;">${opts}</select>
+        <button class="btn soft sm" style="width:auto;" onclick="testVoice('${code}')">🔊 Test</button>
+      </div>
+      ${none}
+    </div>`;
+}
+
+function renderSettings(){
+  const s = state.settings;
+  const rate = s.rate || 0.95;
+  const langLevels = Object.keys(LANG_CONFIG).map(code=>{
+    const l=L(code);
+    const segs = LEVELS.map(lv=>`<button class="${l.level===lv?'on':''}" onclick="setLevel('${code}','${lv}')">${lv}</button>`).join("");
+    return `<div class="field"><label>${l.flag} ${l.name}</label><div class="seg">${segs}</div></div>`;
+  }).join("");
+  const voiceFields = Object.keys(LANG_CONFIG).map(voiceField).join("");
+  const rateSeg = [["Langsam",0.8],["Normal",0.95],["Zügig",1.1]]
+    .map(([t,r])=>`<button class="${Math.abs(rate-r)<0.01?'on':''}" onclick="setRate(${r})">${t}</button>`).join("");
+
+  app().innerHTML = `
+    <button class="back" onclick="go('home')">‹ Zurück</button>
+    <h1 class="page-title">Einstellungen</h1>
+    <p class="page-sub">Niveau, Stimmen, KI-Verbindung & Installation</p>
+
+    <p class="eyebrow">Niveau pro Sprache</p>
+    ${langLevels}
+    <p class="hint" style="margin:-6px 0 24px;">Niveau ändern erzeugt einen neuen Lernpfad für diese Sprache.</p>
+
+    <p class="eyebrow">Stimmen</p>
+    ${voiceFields}
+    <div class="field">
+      <label>Sprechtempo</label>
+      <div class="seg">${rateSeg}</div>
+    </div>
+    <div class="lesson-card" style="margin-bottom:24px;">
+      <p style="margin:0;font-size:14px;color:var(--ink-soft);">Klingt es blechern? Lade auf dem iPhone die <b>natürlichen HD-Stimmen</b> nach: <b>Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen</b> → Sprache wählen → eine Stimme mit dem Zusatz <b>„Premium"</b> oder <b>„Erweitert"</b> herunterladen. Danach hier oben auswählen und testen.</p>
+    </div>
+
+    <p class="eyebrow">KI-Verbindung</p>
+    <div class="field">
+      <label>API-Endpoint</label>
+      <input id="setEndpoint" value="${esc(s.endpoint)}">
+      <p class="hint">Hier im Chat funktioniert <code>api.anthropic.com</code> direkt. Für GitHub Pages trag deinen Cloudflare-Worker ein (z. B. <code>https://spring-water-f9f9.philipp-zart.workers.dev</code>) — er muss den Body als Anthropic-<code>/v1/messages</code>-Format weiterreichen.</p>
+    </div>
+    <div class="field">
+      <label>Modell</label>
+      <input id="setModel" value="${esc(s.model)}">
+      <p class="hint">z. B. <code>claude-sonnet-4-6</code> (beste Gesprächsqualität) oder <code>claude-3-5-haiku-20241022</code> (schnell/günstig).</p>
+    </div>
+    <button class="btn" onclick="saveSettings()">Verbindung speichern</button>
+
+    <p class="eyebrow" style="margin-top:28px">Aufs iPhone</p>
+    <div class="lesson-card">
+      <p style="margin:0;font-size:14.5px;color:var(--ink-soft);">Safari öffnen → Teilen-Symbol → „Zum Home-Bildschirm". Dann startet <b>sprich.</b> als App im Vollbild, und das Mikrofon im Call Mode funktioniert.</p>
+    </div>
+
+    <button class="btn ghost" style="margin-top:20px;color:var(--bad);border-color:var(--bad);" onclick="resetAll()">Fortschritt zurücksetzen</button>
+  `;
+
+  // Stimmen laden oft verzögert — bei Bedarf einmal neu rendern
+  if(window.speechSynthesis && !speechSynthesis.getVoices().length){
+    speechSynthesis.getVoices();
+    speechSynthesis.addEventListener("voiceschanged", function reload(){
+      speechSynthesis.removeEventListener("voiceschanged", reload);
+      if(view.name==="settings") renderSettings();
+    });
+  }
+}
+function setVoice(code, uri){
+  state.langs[code].voiceURI = uri || null;
+  saveState();
+  testVoice(code);
+}
+function testVoice(code){
+  const samples = { es:"Hola, ¿qué tal? Vamos a practicar.", fr:"Bonjour, on va s'entraîner ensemble.", sv:"Hej, ska vi öva lite tillsammans?" };
+  speak(samples[code]||"Hallo", LANG_CONFIG[code].speak);
+}
+function setRate(r){
+  state.settings.rate = r;
+  saveState();
+  renderSettings();
+  // kurze Hörprobe in einer verfügbaren Sprache
+  testVoice("es");
+}
+function setLevel(code, lv){
+  if(state.langs[code].level===lv){ return; }
+  applyLevel(code, lv);
+}
+function saveSettings(){
+  state.settings.endpoint = document.getElementById("setEndpoint").value.trim();
+  state.settings.model = document.getElementById("setModel").value.trim();
+  saveState();
+  toast("Gespeichert");
+}
+function resetAll(){
+  if(confirm("Allen Lernfortschritt und alle Lernpfade löschen?")){
+    localStorage.removeItem(STORE_KEY);
+    state = loadState();
+    toast("Zurückgesetzt");
+    go("home");
+  }
+}
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+function loadingHTML(msg){ return `<div class="loading"><div class="spin"></div><div>${esc(msg)}</div></div>`; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function norm(s){ return String(s||"").toLowerCase().trim().replace(/[.,!?;:¿¡"']/g,"").replace(/\s+/g," "); }
+function stripAccents(s){ return s.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+
+/* expose handlers (inline onclick) */
+Object.assign(window,{ go,openLang,renderPath,paintUnits,toggleModule,retryModule,openUnit,renderLesson,startExercises,startUnitConversation,regeneratePath,
+  answerMC,submitText,nextExercise,quitExercises,applyLevel,startCall,toggleMic,sendCallText,
+  sendCallText,replayLine,endCall,sendUserTurn,setLevel,saveSettings,resetAll,speak,paintCallStage,
+  setVoice,testVoice,setRate,
+  renderVocab,startVocabSession,flipFlash,answerVocabMC,submitVocabWrite,submitVocabCloze,gradeVocab,quitVocab });
+
+/* start */
+render();
+</script>
+</body>
+</html>
