@@ -462,41 +462,116 @@ function buildBrief(code, unit){
 /* =========================================================
    Wortschatz-Themen (dezidiert pro Sprache, niveaukalibriert)
    ========================================================= */
-const VOCAB_TOPICS = {
-  fr: [
-    "Begrüßung & Höflichkeit","Zahlen, Datum & Uhrzeit","Farben & Formen","Familie & Personen",
-    "Körper & Gesundheit","Kleidung","Essen & Getränke","Im Café & Restaurant","Lebensmittel einkaufen",
-    "Haus, Zimmer & Möbel","Bad & Küche","Wetter & Jahreszeiten","Wochentage & Monate",
-    "Hobbys & Freizeit","Sport","Stadt & Gebäude","Wegbeschreibung & Richtungen","Verkehrsmittel",
-    "Reisen & Urlaub","Schule & Lernen","Arbeit & Berufe","Tiere","Natur","Gefühle (Basis)"
-  ],
-  es: [
-    "Vorstellung & persönliche Infos","Familie & Beziehungen","Tagesablauf & Routinen","Essen & Restaurant",
-    "Einkaufen & Geschäfte","Kleidung & Mode","Wohnen & Haushalt","Stadt & Orientierung","Reisen & Verkehr",
-    "Im Hotel","Gesundheit & Arztbesuch","Körper & Wohlbefinden","Wetter & Klima","Freizeit & Hobbys",
-    "Sport & Fitness","Arbeit & Beruf","Studium & Bildung","Technik & Handy","Gefühle & Charakter",
-    "Feste & Traditionen","Natur & Umwelt","Medien & Unterhaltung","Geld & Bank","Notfälle & Probleme"
-  ],
-  sv: [
-    "Persönlichkeit & Beziehungen","Arbeitswelt & Karriere","Bewerbung & Büro","Studium & Bildung",
-    "Gesundheit & Lebensstil","Wohnen & Einrichtung","Stadt & Gesellschaft","Reisen & Erlebnisse",
-    "Essen & Restaurantkultur","Einkaufen & Konsum","Geld & Wirtschaft (Alltag)","Technik & Digitales",
-    "Medien & Nachrichten","Umwelt & Natur","Politik & Gesellschaft","Gefühle & Stimmungen (nuanciert)",
-    "Meinungen & Argumentieren","Redewendungen & Alltagssprache","Schwedische Kultur","Feste & Feiertage",
-    "Verkehr & Mobilität","Freizeit & Sport","Soziales & Beziehungen","Konflikte & Probleme lösen"
-  ],
-};
-function vocabId(code, idx){ return "v-"+code+"-"+idx; }
-function vocabProgress(code){
-  const list = VOCAB_TOPICS[code]||[];
-  let done=0; list.forEach((_,i)=>{ if(unitDone(code, vocabId(code,i))) done++; });
-  return { total:list.length, done };
-}
-function buildVocabPrompt(code, topic){
-  const l = L(code);
-  return `Bring mir den wichtigsten Wortschatz zum Thema "${topic}" auf ${l.aiName} bei (mein Niveau: ${l.level}).
-Gib mir die ~15–20 nützlichsten Wörter und Wendungen, jeweils mit kurzer deutscher Bedeutung und einem Beispielsatz, ${registerPhrase()}.
-Speichere die Wörter in Langua, damit wir sie in Karten und Gesprächen üben. Frag mich danach ein paar davon spielerisch ab.`;
+/* =========================================================
+   Wortschatz-Taxonomie (A1→C1, themenbasiert für Langua)
+   Pro Thema in Langua ~20–30 Wörter/Phrasen → über alle Themen
+   ergeben sich ca. 6000–8000 Wörter bis C1.
+   ========================================================= */
+const VOCAB_TAXONOMY = [
+  { c:"Grundlagen & Kommunikation", lv:"A1", t:[
+    "Begrüßungen und Verabschiedungen","Sich vorstellen","Höflichkeitsfloskeln (bitte, danke, Entschuldigung)",
+    "Zahlen 0 bis 100","Große Zahlen und Ordnungszahlen","Uhrzeit und Tageszeiten",
+    "Wochentage, Monate und Datum","Farben und Muster","Buchstabieren und das Alphabet",
+    "Im Gespräch nachfragen und um Wiederholung bitten","Mengen, Maße und Größenangaben"]},
+  { c:"Mensch & Familie", lv:"A1", t:[
+    "Familienmitglieder","Verwandtschaft erweitert","Aussehen und Körperbau beschreiben",
+    "Charakter und Persönlichkeit","Lebensabschnitte und Alter","Beziehungsstatus und Zivilstand",
+    "Freundschaft und Bekanntschaften","Jemanden kennenlernen"]},
+  { c:"Körper & Gesundheit", lv:"A1", t:[
+    "Körperteile","Gesicht und Kopf","Krankheiten und Symptome","Beim Arzt","In der Apotheke",
+    "Medikamente und Behandlung","Beim Zahnarzt","Unfälle und Erste Hilfe","Gesunde Lebensweise",
+    "Hygiene und Körperpflege","Schmerzen beschreiben"]},
+  { c:"Essen & Trinken", lv:"A1", t:[
+    "Obst","Gemüse","Fleisch und Fisch","Getränke","Frühstück","Süßigkeiten und Snacks",
+    "Gewürze und Zutaten","Im Restaurant bestellen","Speisekarte und Gänge","Kochen und Zubereitung",
+    "Küchengeräte und Geschirr","Ernährung und Diät"]},
+  { c:"Einkaufen", lv:"A2", t:[
+    "Lebensmittel einkaufen","Im Supermarkt","Auf dem Markt","Preise und Bezahlen",
+    "Im Bekleidungsgeschäft","Größen und Anprobieren","Elektronik kaufen","Reklamieren und Umtausch",
+    "Geschäfte und Läden","Online-Shopping"]},
+  { c:"Wohnen & Haushalt", lv:"A2", t:[
+    "Wohnungstypen","Zimmer im Haus","Möbel","In der Küche","Im Badezimmer","Haushaltsgeräte",
+    "Wohnung mieten und suchen","Renovieren und Reparieren","Garten und Balkon","Nachbarschaft","Umzug"]},
+  { c:"Kleidung & Mode", lv:"A2", t:[
+    "Kleidungsstücke","Schuhe und Accessoires","Stoffe und Materialien","Stil und Mode","Schmuck und Uhren"]},
+  { c:"Alltag & Routinen", lv:"A2", t:[
+    "Tagesablauf","Morgen- und Abendroutine","Hausarbeit und Putzen","Termine und Verabredungen",
+    "Gewohnheiten und Häufigkeit","Pläne und Verpflichtungen"]},
+  { c:"Wetter & Zeit", lv:"A2", t:[
+    "Wetter","Jahreszeiten","Klima und Temperatur","Naturphänomene","Zeitangaben und Adverbien","Feiertage im Jahr"]},
+  { c:"Stadt & Orientierung", lv:"A2", t:[
+    "Gebäude und öffentliche Orte","Wegbeschreibung","Himmelsrichtungen und Lage","Sehenswürdigkeiten",
+    "Behörden und Ämter","Bank und Geldautomat","Post und Pakete","Notdienste","Schilder und Hinweise"]},
+  { c:"Verkehr & Reisen", lv:"A2", t:[
+    "Verkehrsmittel","Mit dem Auto","Am Bahnhof und Zug","Am Flughafen und Flug","Im Hotel einchecken",
+    "Camping und Unterkünfte","Reise planen und buchen","Urlaubsaktivitäten","Panne und Probleme unterwegs",
+    "Tickets und Fahrpläne","Stadtrundfahrt und Tourismus"]},
+  { c:"Arbeit & Beruf", lv:"B1", t:[
+    "Berufe und Tätigkeiten","Am Arbeitsplatz","Büroausstattung","Bewerbung und Lebenslauf",
+    "Vorstellungsgespräch","Gehalt und Arbeitsvertrag","Meetings und Teamarbeit","Selbstständigkeit",
+    "Jobsuche und Arbeitslosigkeit","Karriere und Beförderung","Arbeitszeit und Pausen"]},
+  { c:"Bildung & Lernen", lv:"B1", t:[
+    "Schule und Klassen","Universität und Studium","Schulfächer","Prüfungen und Noten",
+    "Sprachen lernen","Weiterbildung und Kurse","Forschung und Wissenschaft (Alltag)","Bibliothek und Lernmaterial"]},
+  { c:"Technik & Digitales", lv:"B1", t:[
+    "Computer und Laptop","Smartphone und Apps","Internet und Webseiten","E-Mail und Nachrichten",
+    "Soziale Medien","Software und Programme","Online-Sicherheit und Passwörter","Künstliche Intelligenz im Alltag"]},
+  { c:"Freizeit & Hobbys", lv:"B1", t:[
+    "Hobbys allgemein","Musik und Instrumente","Film und Serien","Bücher und Lesen","Spiele und Brettspiele",
+    "Fotografie","Handarbeit und Basteln","Sammeln und Tüfteln","Ausgehen und Veranstaltungen"]},
+  { c:"Sport", lv:"B1", t:[
+    "Sportarten allgemein","Fußball","Im Fitnessstudio","Wintersport","Wassersport",
+    "Laufen und Ausdauer","Mannschaft und Wettkampf","Sportverletzungen"]},
+  { c:"Natur & Umwelt", lv:"B1", t:[
+    "Haustiere","Wildtiere","Pflanzen und Bäume","Landschaften und Geografie","Umweltschutz",
+    "Klimawandel","Müll und Recycling","Wetterextreme und Katastrophen","Energie und Ressourcen"]},
+  { c:"Gefühle & Beziehungen", lv:"B1", t:[
+    "Grundgefühle","Komplexe Emotionen","Stimmungen und Laune","Liebe und Partnerschaft",
+    "Konflikte und Streit","Versöhnung und Kompromiss","Empathie und Mitgefühl","Vertrauen und Enttäuschung"]},
+  { c:"Geld & Finanzen", lv:"B1", t:[
+    "Bankgeschäfte","Sparen und Ausgeben","Versicherungen","Steuern im Alltag","Online-Banking",
+    "Budget und Haushaltsplan","Schulden und Kredite"]},
+  { c:"Gesundheitssystem & Medizin", lv:"B2", t:[
+    "Krankenhaus und Stationen","Fachärzte und Fachrichtungen","Operationen und Eingriffe",
+    "Psychische Gesundheit","Pflege und Alter","Ernährung und Diäten (medizinisch)",
+    "Klinische Studien und Forschung","Diagnose und Untersuchung","Medizinische Geräte"]},
+  { c:"Gesellschaft & Soziales", lv:"B2", t:[
+    "Soziale Themen","Generationen und Familie heute","Migration und Integration","Gleichberechtigung",
+    "Ehrenamt und Engagement","Armut und Reichtum","Wohnen und Stadtentwicklung","Bildungschancen"]},
+  { c:"Politik & Staat", lv:"B2", t:[
+    "Regierung und Staat","Wahlen und Demokratie","Gesetze und Recht","Internationale Beziehungen",
+    "Parteien und Ideologien","Bürgerrechte und Pflichten","Verwaltung und Bürokratie","EU und globale Politik"]},
+  { c:"Wirtschaft", lv:"B2", t:[
+    "Wirtschaft allgemein","Unternehmen und Markt","Globalisierung","Börse und Aktien",
+    "Arbeitsmarkt","Konsum und Werbung","Start-ups und Innovation"]},
+  { c:"Medien & Kommunikation", lv:"B2", t:[
+    "Nachrichten und Presse","Journalismus","Fernsehen und Radio","Werbung und Marketing",
+    "Meinungsfreiheit","Fake News und Desinformation","Influencer und Online-Kultur"]},
+  { c:"Wissenschaft & Technik", lv:"B2", t:[
+    "Naturwissenschaften","Medizin und Forschung","Raumfahrt und Astronomie","Energie und Strom",
+    "Erfindungen und Patente","Digitalisierung","Biologie und Genetik","Physik und Chemie (Alltag)"]},
+  { c:"Kunst & Kultur", lv:"B2", t:[
+    "Bildende Kunst","Theater und Oper","Literatur und Genres","Architektur","Geschichte und Epochen",
+    "Museen und Ausstellungen","Feste und Traditionen","Religion und Weltanschauung"]},
+  { c:"Sprache & Nuancen", lv:"C1", t:[
+    "Konnektoren und Argumentation","Synonyme und Wortnuancen","Formelle vs. informelle Sprache",
+    "Höfliche und diplomatische Formulierungen","Umgangssprache und Slang","Füllwörter und Gesprächspartikel",
+    "Modalpartikeln und Abtönung","Wortbildung (Vor- und Nachsilben)"]},
+  { c:"Abstrakte Konzepte", lv:"C1", t:[
+    "Philosophie und Ethik","Psychologie","Werte und Moral","Zeit, Wandel und Fortschritt",
+    "Erfolg und Scheitern","Identität und Selbst","Glück und Lebenssinn","Risiko und Entscheidung"]},
+  { c:"Beruf & Fachsprache", lv:"C1", t:[
+    "Verhandlungen führen","Präsentationen halten","Projektmanagement","Recht und Verträge",
+    "Wissenschaftliches Schreiben","Fachvokabular Medizin und klinische Studien","Finanzen und Controlling"]},
+  { c:"Redewendungen & Idiomatik", lv:"C1", t:[
+    "Häufige Redewendungen","Sprichwörter","Bildhafte Ausdrücke und Metaphern","Kollokationen (feste Wortpaare)",
+    "Phrasal- bzw. Partikelverben","Witze, Ironie und Wortspiele"]},
+];
+function vocabId(code, ci, ti){ return "v-"+code+"-"+ci+"-"+ti; }
+function vocabCounts(code){
+  let total=0, done=0;
+  VOCAB_TAXONOMY.forEach((cat,ci)=>cat.t.forEach((_,ti)=>{ total++; if(unitDone(code, vocabId(code,ci,ti))) done++; }));
+  return { total, done };
 }
 
 /* =========================================================
@@ -770,46 +845,70 @@ function markUnit(code, unitId){
    WORTSCHATZ-THEMEN
    ========================================================= */
 function renderVocabList(){
-  const code=view.lang, l=L(code), list=VOCAB_TOPICS[code]||[], p=vocabProgress(code);
-  const rows = list.map((t,i)=>{
-    const done = unitDone(code, vocabId(code,i));
-    return `<button class="unit ${done?'done':''}" onclick="go('vocabitem',{lang:'${code}',idx:${i}})">
-      <span class="unit-num">${done?'✓':(i+1)}</span>
-      <div><div class="unit-title">${esc(t)}</div></div>
-      <span class="unit-state">›</span></button>`;
-  }).join("");
+  const code=view.lang, l=L(code), p=vocabCounts(code);
+  const estLow=Math.round(p.total*20/100)*100, estHigh=Math.round(p.total*30/100)*100;
+  let html="";
+  VOCAB_TAXONOMY.forEach((cat,ci)=>{
+    const open = (state.langs[code]._vopen===ci);
+    const dn = cat.t.filter((_,ti)=>unitDone(code, vocabId(code,ci,ti))).length;
+    html += `<button class="mod-toggle" onclick="toggleVocabCat('${code}',${ci})">
+        <span class="mt-name">${esc(cat.c)} <span class="chip" style="font-size:10px;padding:1px 7px;vertical-align:middle">${cat.lv}</span></span>
+        <span class="mt-x">${dn}/${cat.t.length} ${open?'▲':'▾'}</span>
+      </button>`;
+    if(open){
+      cat.t.forEach((topic,ti)=>{
+        const done=unitDone(code, vocabId(code,ci,ti));
+        html += `<button class="unit ${done?'done':''}" onclick="go('vocabitem',{lang:'${code}',ci:${ci},ti:${ti}})">
+          <span class="unit-num">${done?'✓':'•'}</span>
+          <div><div class="unit-title">${esc(topic)}</div></div>
+          <span class="unit-state">›</span></button>`;
+      });
+    }
+  });
   app().innerHTML = `
     <button class="back" onclick="go('lang',{lang:'${code}'})">‹ ${esc(l.name)}</button>
     <h1 class="page-title">${l.flag} Wortschatz</h1>
-    <p class="page-sub">Themenliste für ${l.name} · Niveau ${l.level} · ${p.done}/${p.total}</p>
-    <p class="hint" style="margin:-8px 0 16px">Tippe ein Thema, kopiere den Auftrag und lass dir die Wörter in Langua beibringen und speichern.</p>
-    ${rows}
+    <p class="page-sub">${p.done}/${p.total} Themen · Niveau ${l.level} · Ziel bis C1: ca. ${estLow}–${estHigh} Wörter</p>
+    <p class="hint" style="margin:-8px 0 16px">Tippe ein Thema, kopiere es und gib es in Langua bei „Related to a topic" ein (20–30, Words oder Phrases). Beginne grob bei deinem Niveau.</p>
+    ${html}
   `;
 }
+function toggleVocabCat(code, ci){
+  state.langs[code]._vopen = (state.langs[code]._vopen===ci)? undefined : ci;
+  saveState(); renderVocabList();
+}
 function renderVocabItem(){
-  const code=view.lang, l=L(code), idx=view.idx, topic=(VOCAB_TOPICS[code]||[])[idx];
+  const code=view.lang, l=L(code), ci=view.ci, ti=view.ti;
+  const cat=VOCAB_TAXONOMY[ci]; const topic=cat && cat.t[ti];
   if(topic==null){ app().innerHTML=`<button class="back" onclick="go('vocab',{lang:'${code}'})">‹ Zurück</button><div class="err">Thema nicht gefunden.</div>`; return; }
-  const id=vocabId(code,idx), done=unitDone(code,id), prompt=buildVocabPrompt(code,topic);
+  const id=vocabId(code,ci,ti), done=unitDone(code,id);
   app().innerHTML = `
     <button class="back" onclick="go('vocab',{lang:'${code}'})">‹ Wortschatz</button>
     <h1 class="page-title">${esc(topic)}</h1>
-    <p class="page-sub">${l.name} · Niveau ${l.level}</p>
+    <p class="page-sub">${esc(cat.c)} · ${l.name} · Niveau ${l.level}</p>
 
-    <p class="eyebrow">Auftrag für Langua</p>
+    <p class="eyebrow">Thema für Langua</p>
     <div class="card">
-      <div class="brief-prompt">${esc(prompt)}</div>
-      <div class="row" style="margin-top:12px">
-        <button class="btn sm" onclick="copyText(${esc(JSON.stringify(prompt))})">Prompt kopieren</button>
-        <a class="btn ghost sm" href="https://languatalk.com" target="_blank" rel="noopener" style="line-height:1.4">Langua öffnen ↗</a>
-      </div>
-      <p class="hint" style="margin:10px 0 0">In Langua einfügen — du bekommst die Wörter mit Beispielen und kannst sie dort speichern.</p>
+      <div class="brief-prompt" style="font-weight:600;font-size:17px">${esc(topic)}</div>
+      <button class="btn sm" style="margin-top:12px" onclick="copyText(${esc(JSON.stringify(topic))})">Thema kopieren</button>
     </div>
 
-    <button class="btn ${done?'ghost':''}" style="margin-top:16px" onclick="markVocab('${code}',${idx})">${done?'✓ Erledigt — nochmal markieren':'Als erledigt markieren'}</button>
+    <p class="eyebrow" style="margin-top:20px">So geht's in Langua</p>
+    <div class="card">
+      <div style="font-size:14.5px;line-height:1.6">
+        1. Flashcards → <b>Generate Flashcards</b><br>
+        2. Anzahl wählen (z. B. <b>20–30</b>) und <b>Words</b> oder <b>Phrases</b><br>
+        3. <b>Related to a topic</b> wählen<br>
+        4. Dieses Thema einfügen und <b>Generate</b>
+      </div>
+      <a class="btn ghost sm" href="https://languatalk.com" target="_blank" rel="noopener" style="margin-top:12px;line-height:1.4">Langua öffnen ↗</a>
+    </div>
+
+    <button class="btn ${done?'ghost':''}" style="margin-top:16px" onclick="markVocab('${code}',${ci},${ti})">${done?'✓ Erledigt — nochmal markieren':'Als erledigt markieren'}</button>
   `;
 }
-function markVocab(code, idx){
-  const id=vocabId(code,idx), was=unitDone(code,id);
+function markVocab(code, ci, ti){
+  const id=vocabId(code,ci,ti), was=unitDone(code,id);
   if(was){ state.langs[code].progress[id]=undefined; saveState(); toast("Markierung entfernt"); }
   else { recordSessionDone(code, id); toast("Erledigt 🎉 Streak "+state.streak.current); }
   renderVocabItem();
@@ -1021,7 +1120,7 @@ function resetAll(){ if(confirm("Alle Pläne und Fortschritte löschen?")){ loca
    Globale Freigabe für inline-Handler
    ========================================================= */
 Object.assign(window, {
-  go, openLang, openUnit, markUnit, markVocab,
+  go, openLang, openUnit, markUnit, markVocab, toggleVocabCat,
   toggleModule, addCustomTopic,
   analyzeSong, resetSong, copyText,
   toggleRoutineLang, setFocus, setLevel, setRegister, saveConn, exportData, importData, resetAll,
