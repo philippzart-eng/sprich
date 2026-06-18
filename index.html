@@ -6,6 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="plan.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 <title>plan.</title>
 <style>
 :root{
@@ -176,7 +180,7 @@ function defaultState(){
     langs[c] = { level:LANG_CONFIG[c].defLevel, plan:null, units:{}, briefs:{}, progress:{}, custom:[] };
   });
   return {
-    settings:{ endpoint:"https://api.anthropic.com/v1/messages", model:"claude-sonnet-4-6", register:"alltag" },
+    settings:{ endpoint:"https://api.anthropic.com/v1/messages", model:"claude-sonnet-4-6", register:"alltag", languaUrl:"" },
     langs,
     routine:{ langs:Object.keys(LANG_CONFIG), focusMode:"rotate" },
     streak:{ current:0, longest:0, lastDate:null },
@@ -234,6 +238,21 @@ function fallbackCopy(t){
   document.body.appendChild(ta); ta.focus(); ta.select();
   try{ document.execCommand("copy"); toast("Kopiert"); }catch(e){ toast("Kopieren nicht möglich"); }
   ta.remove();
+}
+const LANGUA_WEB = "https://languatalk.com";
+function openLangua(){
+  const u = (state.settings.languaUrl||"").trim();
+  // Kein App-Link gesetzt oder normaler Web-/Universal-Link → im Browser öffnen
+  if(!u || /^https?:/i.test(u)){ window.open(u||LANGUA_WEB, "_blank", "noopener"); return; }
+  // Custom-Schema (z. B. langua://) → App versuchen, sonst auf Website zurückfallen
+  let switched=false;
+  const onHide=()=>{ switched=true; };
+  document.addEventListener("visibilitychange", onHide, {once:true});
+  setTimeout(()=>{
+    document.removeEventListener("visibilitychange", onHide);
+    if(!switched && !document.hidden) window.open(LANGUA_WEB, "_blank", "noopener");
+  }, 1400);
+  try{ window.location.href = u; }catch(e){ window.open(LANGUA_WEB, "_blank", "noopener"); }
 }
 
 function parseJSON(text){
@@ -629,6 +648,7 @@ function render(){
   else if(view.name==="lang") renderLang();
   else if(view.name==="unit") renderUnit();
   else if(view.name==="song") renderSong();
+  else if(view.name==="listen") renderListen();
   else if(view.name==="vocab") renderVocabList();
   else if(view.name==="vocabitem") renderVocabItem();
   else if(view.name==="stats") renderStats();
@@ -696,6 +716,29 @@ function renderHome(){
       <span class="tk-go">›</span></button>`;
   }).join("");
 
+  if(!state.daily.flow) state.daily.flow = {};
+  const flowOpen = state.settings.flowOpen!==false;
+  const steps = [
+    "Fällige Karten in Langua wiederholen",
+    "Vokabel-Thema kopieren → in Langua Flashcards erstellen",
+    "Gesprächs-Prompt der Lektion → in Langua sprechen",
+    "Neue Wörter in Langua speichern",
+    "Hier abhaken (Lektion/Thema als erledigt)"
+  ];
+  const flowRows = steps.map((s,i)=>{
+    const on = !!state.daily.flow[i];
+    return `<button class="task ${on?'done':''}" onclick="toggleFlowStep(${i})" style="margin-bottom:7px">
+      <span class="tk-ic">${on?'✓':(i+1)}</span>
+      <div><div class="tk-t" style="font-size:14px">${s}</div></div></button>`;
+  }).join("");
+  const flowCard = `
+    <button class="mod-toggle" style="margin-top:22px" onclick="toggleFlowOpen()">
+      <span class="mt-name">So läuft dein Tag</span><span class="mt-x">${flowOpen?'▲':'▾'}</span>
+    </button>
+    ${flowOpen?`<div style="margin-top:4px">${flowRows}
+      <button class="btn ghost sm" onclick="openLangua()" style="margin-top:4px;line-height:1.4">Langua öffnen ↗</button>
+    </div>`:""}`;
+
   app().innerHTML = `
     <div class="topbar">
       <div class="brand">plan<span>.</span></div>
@@ -715,9 +758,11 @@ function renderHome(){
 
     ${otherLinks?`<p class="eyebrow" style="margin-top:22px">Weitere Sprachen</p>${otherLinks}`:""}
 
-    <p class="hint" style="text-align:center;margin-top:18px">Öffne eine Einheit, kopiere den Langua-Auftrag und übe dort. Danach „erledigt" antippen.</p>
+    ${flowCard}
   `;
 }
+function toggleFlowStep(i){ ensureToday(); state.daily.flow[i] = !state.daily.flow[i]; saveState(); renderHome(); }
+function toggleFlowOpen(){ state.settings.flowOpen = !(state.settings.flowOpen!==false); saveState(); renderHome(); }
 
 /* =========================================================
    SPRACHE (Tab)
@@ -739,10 +784,11 @@ async function renderLang(){
     <p class="eyebrow">Werkzeuge</p>
     <button class="btn soft" onclick="go('vocab',{lang:'${code}'})">Wortschatz-Themen</button>
     <div class="row" style="margin:10px 0">
+      <button class="btn soft sm" onclick="go('listen',{lang:'${code}'})">Hören</button>
       <button class="btn soft sm" onclick="go('song',{lang:'${code}'})">Songtext</button>
       <button class="btn soft sm" onclick="addCustomTopic('${code}')">Eigenes Thema</button>
     </div>
-    <a class="btn ghost" href="https://languatalk.com" target="_blank" rel="noopener">Langua öffnen ↗</a>
+    <button class="btn ghost" onclick="openLangua()">Langua öffnen ↗</button>
 
     <p class="eyebrow" style="margin-top:24px">Lernplan</p>
     <div id="planBody"></div>
@@ -823,14 +869,17 @@ function paintBrief(code, unit, brief){
       <div class="brief-prompt">${esc(brief.prompt)}</div>
       <div class="row" style="margin-top:12px">
         <button class="btn sm" onclick="copyText(${esc(JSON.stringify(brief.prompt))})">Prompt kopieren</button>
-        <a class="btn ghost sm" href="https://languatalk.com" target="_blank" rel="noopener" style="line-height:1.4">Langua öffnen ↗</a>
+        <button class="btn ghost sm" onclick="openLangua()" style="line-height:1.4">Langua öffnen ↗</button>
       </div>
       <p class="hint" style="margin:10px 0 0">In Langua einfügen, sprechen, und die neuen Wörter dort speichern — Langua webt sie dann in Karten und Gespräche ein.</p>
     </div>
 
     ${success?`<p class="eyebrow" style="margin-top:20px">Geschafft, wenn …</p><div class="card">${success}</div>`:""}
 
-    <button class="btn ${done?'ghost':''}" style="margin-top:8px" onclick="markUnit('${code}','${unit.id}')">${done?'✓ Erledigt — nochmal markieren':'Als erledigt markieren'}</button>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ${done?'ghost':''}" onclick="markUnit('${code}','${unit.id}')">${done?'✓ Erledigt':'Als erledigt markieren'}</button>
+      <button class="btn ghost" style="flex:0 0 auto" onclick="go('listen',{lang:'${code}',topic:'${esc(unit.theme).replace(/'/g,"\\'")}'})">♪ Hörtext</button>
+    </div>
   `;
 }
 function markUnit(code, unitId){
@@ -901,7 +950,7 @@ function renderVocabItem(){
         3. <b>Related to a topic</b> wählen<br>
         4. Dieses Thema einfügen und <b>Generate</b>
       </div>
-      <a class="btn ghost sm" href="https://languatalk.com" target="_blank" rel="noopener" style="margin-top:12px;line-height:1.4">Langua öffnen ↗</a>
+      <button class="btn ghost sm" onclick="openLangua()" style="margin-top:12px;line-height:1.4">Langua öffnen ↗</button>
     </div>
 
     <button class="btn ${done?'ghost':''}" style="margin-top:16px" onclick="markVocab('${code}',${ci},${ti})">${done?'✓ Erledigt — nochmal markieren':'Als erledigt markieren'}</button>
@@ -1017,8 +1066,78 @@ ${chunk}`;
 }
 
 /* =========================================================
-   STATISTIK
+   HÖREN — Prompt-Builder für ChatGPT (Text generieren + vorlesen)
    ========================================================= */
+const LISTEN_PRESETS = [100, 200, 300, 500, 800];
+
+function buildListenPrompt(code, level, topic, words){
+  const l = LANG_CONFIG[code];
+  return `Schreibe einen zusammenhängenden Text auf ${l.aiName} zum Thema „${topic}“.
+Niveau: ${level} (GER-Skala). Länge: ca. ${words} Wörter.
+Stil: natürlich und gut hörbar (ich höre den Text unterwegs an), ${registerPhrase()}, als Fließtext in 2–4 Absätzen, ohne Überschriften und ohne Aufzählungen. Verwende alltagsnahen, idiomatischen Wortschatz, der zum Niveau ${level} passt.
+Gib zuerst nur den Text aus. Liste danach unter „Wortschatz:“ 6–8 Schlüsselwörter mit deutscher Übersetzung.
+Lies mir den Text anschließend mit der Vorlesefunktion vor.`;
+}
+
+function renderListen(){
+  const code=view.lang, l=L(code);
+  const cfg = state.settings.listenCfg || {};
+  const selLang = view.lang || cfg.lang || code;
+  const selLevel = cfg.level || L(selLang).level;
+  const selWords = cfg.words || 250;
+  const presetTopic = view.topic || cfg.topic || "";
+
+  const langOpts = Object.keys(LANG_CONFIG).map(c=>`<option value="${c}" ${c===selLang?'selected':''}>${LANG_CONFIG[c].flag} ${LANG_CONFIG[c].name}</option>`).join("");
+  const levelOpts = LEVELS.map(lv=>`<option value="${lv}" ${lv===selLevel?'selected':''}>${lv}</option>`).join("");
+  const presetChips = LISTEN_PRESETS.map(n=>`<button type="button" onclick="setListenWords(${n})">${n}</button>`).join("");
+
+  app().innerHTML = `
+    <button class="back" onclick="go('lang',{lang:'${code}'})">‹ ${esc(l.name)}</button>
+    <h1 class="page-title">Hören</h1>
+    <p class="page-sub">Erzeuge einen Prompt für ChatGPT — dort Text generieren und vorlesen lassen.</p>
+
+    <div class="field"><label>Sprache</label><select id="lsLang">${langOpts}</select></div>
+    <div class="field"><label>Niveau</label><select id="lsLevel">${levelOpts}</select></div>
+    <div class="field"><label>Thema</label><input id="lsTopic" value="${esc(presetTopic)}" placeholder="z. B. Mein Arbeitsweg, Klinische Studien…"></div>
+    <div class="field"><label>Wortanzahl</label>
+      <input id="lsWords" type="number" inputmode="numeric" min="30" max="2000" step="10" value="${selWords}" placeholder="z. B. 250">
+      <div class="seg" id="lsWordPresets" style="margin-top:8px">${presetChips}</div>
+    </div>
+
+    <button class="btn" onclick="makeListenPrompt()">Prompt erzeugen</button>
+
+    <div id="lsOut" style="margin-top:16px"></div>
+  `;
+}
+function setListenWords(n){
+  const inp=document.getElementById("lsWords"); if(inp) inp.value=n;
+  state.settings.listenCfg = Object.assign({}, state.settings.listenCfg, { words:n });
+  saveState();
+}
+function makeListenPrompt(){
+  const code=document.getElementById("lsLang").value;
+  const level=document.getElementById("lsLevel").value;
+  const topic=(document.getElementById("lsTopic").value||"").trim();
+  let words=parseInt(document.getElementById("lsWords").value,10);
+  if(!words||words<30) words=250; if(words>2000) words=2000;
+  if(!topic){ toast("Bitte ein Thema eingeben"); return; }
+  state.settings.listenCfg = { lang:code, level, words, topic };
+  saveState();
+  const prompt=buildListenPrompt(code, level, topic, words);
+  const out=document.getElementById("lsOut");
+  out.innerHTML = `
+    <p class="eyebrow">Prompt für ChatGPT</p>
+    <div class="card">
+      <div class="brief-prompt">${esc(prompt)}</div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sm" onclick="copyText(${esc(JSON.stringify(prompt))})">Prompt kopieren</button>
+        <button class="btn ghost sm" style="line-height:1.4" onclick="openChatGPT()">ChatGPT öffnen ↗</button>
+      </div>
+      <p class="hint" style="margin:10px 0 0">In ChatGPT einfügen → Text wird erzeugt → dann auf „Vorlesen“ tippen. Tipp: abends generieren, unterwegs anhören.</p>
+    </div>`;
+  out.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+function openChatGPT(){ window.open("https://chatgpt.com","_blank","noopener"); }
 function dayRec(ds){ if(state.daily && state.daily.date===ds) return {done:state.daily.done,sessions:state.daily.sessions}; return state.history[ds]||null; }
 function renderStats(){
   ensureToday();
@@ -1080,6 +1199,8 @@ function renderSettings(){
     <p class="eyebrow">KI-Verbindung</p>
     <div class="field"><label>Endpoint (Cloudflare-Worker)</label><input id="setEndpoint" value="${esc(s.endpoint||'')}" placeholder="https://…workers.dev/"></div>
     <div class="field"><label>Modell</label><input id="setModel" value="${esc(s.model||'')}"></div>
+    <div class="field"><label>Langua-App-Link (optional)</label><input id="setLangua" value="${esc(s.languaUrl||'')}" placeholder="z. B. langua://"></div>
+    <p class="hint" style="margin:-6px 0 10px">Leer lassen → „Langua öffnen" öffnet die Website. Trägst du ein funktionierendes App-Schema (z. B. <b>langua://</b>) ein, wird die App geöffnet, sonst automatisch die Website.</p>
     <button class="btn soft sm" style="width:auto;margin-bottom:22px" onclick="saveConn()">Verbindung speichern</button>
 
     <p class="eyebrow">Backup</p>
@@ -1099,7 +1220,7 @@ function toggleRoutineLang(c){
 function setFocus(v){ state.routine.focusMode=v; saveState(); renderSettings(); }
 function setLevel(c,lv){ state.langs[c].level=lv; saveState(); renderSettings(); }
 function setRegister(k){ state.settings.register=k; applyRegister(); saveState(); renderSettings(); }
-function saveConn(){ state.settings.endpoint=document.getElementById("setEndpoint").value.trim(); state.settings.model=document.getElementById("setModel").value.trim(); saveState(); toast("Gespeichert"); }
+function saveConn(){ state.settings.endpoint=document.getElementById("setEndpoint").value.trim(); state.settings.model=document.getElementById("setModel").value.trim(); const lg=document.getElementById("setLangua"); if(lg) state.settings.languaUrl=lg.value.trim(); saveState(); toast("Gespeichert"); }
 function exportData(){
   try{
     const blob=new Blob([JSON.stringify(state)],{type:"application/json"});
@@ -1120,11 +1241,12 @@ function resetAll(){ if(confirm("Alle Pläne und Fortschritte löschen?")){ loca
    Globale Freigabe für inline-Handler
    ========================================================= */
 Object.assign(window, {
-  go, openLang, openUnit, markUnit, markVocab, toggleVocabCat,
+  go, openLang, openUnit, markUnit, markVocab, toggleVocabCat, toggleFlowStep, toggleFlowOpen, openLangua,
+  makeListenPrompt, setListenWords, openChatGPT,
   toggleModule, addCustomTopic,
   analyzeSong, resetSong, copyText,
   toggleRoutineLang, setFocus, setLevel, setRegister, saveConn, exportData, importData, resetAll,
-  renderUnit, renderSong, renderSettings, renderVocabList, renderVocabItem
+  renderUnit, renderSong, renderSettings, renderVocabList, renderVocabItem, renderListen
 });
 
 /* start */
