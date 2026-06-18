@@ -314,20 +314,27 @@ function extractObjects(text){
    KI-Aufruf (über den Cloudflare-Worker / Anthropic-API)
    ========================================================= */
 async function callAI(system, messages, opts={}){
-  const endpoint = (state.settings.endpoint||"").trim() || "https://api.anthropic.com/v1/messages";
+  let endpoint = (state.settings.endpoint||"").trim() || "https://api.anthropic.com/v1/messages";
+  if(!/^https?:\/\//i.test(endpoint)) endpoint = "https://" + endpoint.replace(/^\/+/,"");
   const body = {
     model: (state.settings.model||"claude-sonnet-4-6").trim(),
     max_tokens: opts.maxTokens || 2000,
     system,
     messages
   };
-  const res = await fetch(endpoint, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(body)
-  });
+  let res;
+  try{
+    res = await fetch(endpoint, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+  }catch(e){
+    throw new Error("Endpoint nicht erreichbar (URL/CORS prüfen): "+e.message);
+  }
   if(!res.ok){
-    if(res.status===401) throw new Error("Kein Zugriff (401) — Worker-Endpoint in den Einstellungen prüfen");
+    if(res.status===401) throw new Error("Kein Zugriff (401) — Worker/API-Key prüfen");
+    if(res.status===404) throw new Error("Nicht gefunden (404) — Worker-URL prüfen");
     if(res.status===429) throw new Error("Zu viele Anfragen (429) — kurz warten");
     throw new Error("Serverfehler "+res.status);
   }
@@ -1164,8 +1171,17 @@ function renderPlacement(){
 }
 async function startPlacement(code){
   const l=L(code);
+  const ep=(state.settings.endpoint||"").trim();
+  if(!ep || /api\.anthropic\.com/i.test(ep)){
+    app().innerHTML=`<button class="back" onclick="go('placement',{lang:'${code}'})">‹ Zurück</button>
+      <div class="err">Es ist noch keine eigene KI-Verbindung eingerichtet. Trag in den Einstellungen → „KI-Verbindung" deine Cloudflare-Worker-URL ein (dieselbe wie in deinen anderen Apps). Die rohe Anthropic-Adresse funktioniert aus dem Browser nicht.</div>
+      <button class="btn" style="margin-top:12px" onclick="go('settings')">Zu den Einstellungen</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('placement',{lang:'${code}',self:1})">Stattdessen selbst einschätzen</button>`;
+    return;
+  }
   app().innerHTML=loadingHTML("Einstufungstest wird erstellt … (0/6)");
-  const results=await runPool(CEFR, 3, async(lv)=>{
+  const errs=[];
+  const results=await runPool(CEFR, 2, async(lv)=>{
     const reading = (lv==="A1") ? "" : " sowie 1 Leseverständnis (2–3 Sätze kurzer Text + Frage dazu)";
     const sys="Du erstellst Einstufungsaufgaben. Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Array, ohne Markdown.";
     const usr=`Sprache: ${l.aiName}. Niveau: ${lv} (GER-Skala). Erstelle 5 Multiple-Choice-Aufgaben exakt auf ${lv}-Niveau, die typische Schwierigkeiten dieses Niveaus prüfen: Grammatik und Wortschatz${reading}. JSON-Array, jedes Objekt: {"type":"Grammatik|Wortschatz|Leseverständnis","context":"<nur bei Leseverständnis ein kurzer Text in ${l.aiName}, sonst leerer String>","q":"<Aufgabe/Lückensatz/Frage in ${l.aiName}>","options":["A","B","C","D"],"answer":<Index 0-3 der einzig richtigen Option>}. Genau eine Option ist eindeutig richtig.`;
@@ -1178,15 +1194,18 @@ async function startPlacement(code){
         const items=(arr||[]).filter(o=>o&&o.q&&Array.isArray(o.options)&&o.options.length>=2&&typeof o.answer==="number")
           .map(o=>({ level:lv, type:String(o.type||"Grammatik"), context:String(o.context||""), q:String(o.q), options:o.options.map(String), answer:o.answer }));
         if(items.length) return items;
-        last=new Error("leer");
+        last=new Error("leere Antwort");
       }catch(e){ last=e; }
     }
+    if(last) errs.push(last.message);
     return [];
   }, (dn,tt)=>{ const el=app().querySelector(".loading div:last-child"); if(el) el.textContent=`Einstufungstest wird erstellt … (${dn}/${tt})`; });
   let qs=[]; results.forEach(r=>{ if(Array.isArray(r)) qs=qs.concat(r); });
   if(qs.length<8){
-    app().innerHTML=`<button class="back" onclick="go('placement',{lang:'${code}'})">‹ Zurück</button><div class="err">Der Test konnte nicht erstellt werden. Prüfe die KI-Verbindung.</div>
+    const detail = errs.length? (" Fehler: "+errs[0]) : "";
+    app().innerHTML=`<button class="back" onclick="go('placement',{lang:'${code}'})">‹ Zurück</button><div class="err">Der Test konnte nicht erstellt werden.${esc(detail)}</div>
       <button class="btn soft" style="margin-top:10px" onclick="startPlacement('${code}')">Erneut</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('settings')">KI-Verbindung prüfen</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('placement',{lang:'${code}',self:1})">Selbst einschätzen</button>`;
     return;
   }
@@ -1656,6 +1675,7 @@ function renderSettings(){
     <div class="field"><label>Langua-App-Link (optional)</label><input id="setLangua" value="${esc(s.languaUrl||'')}" placeholder="z. B. langua://"></div>
     <p class="hint" style="margin:-6px 0 10px">Leer lassen → „Langua öffnen" öffnet die Website. Trägst du ein funktionierendes App-Schema (z. B. <b>langua://</b>) ein, wird die App geöffnet, sonst automatisch die Website.</p>
     <button class="btn soft sm" style="width:auto;margin-bottom:22px" onclick="saveConn()">Verbindung speichern</button>
+    <button class="btn ghost sm" style="width:auto;margin:0 0 22px 8px" onclick="testConn()">Verbindung testen</button>
 
     <p class="eyebrow">Backup</p>
     <button class="btn soft" onclick="exportData()">Daten exportieren</button>
@@ -1675,6 +1695,16 @@ function setFocus(v){ state.routine.focusMode=v; saveState(); renderSettings(); 
 function setLevel(c,lv){ state.langs[c].level=lv; saveState(); renderSettings(); }
 function setRegister(k){ state.settings.register=k; applyRegister(); saveState(); renderSettings(); }
 function saveConn(){ state.settings.endpoint=document.getElementById("setEndpoint").value.trim(); state.settings.model=document.getElementById("setModel").value.trim(); const lg=document.getElementById("setLangua"); if(lg) state.settings.languaUrl=lg.value.trim(); saveState(); toast("Gespeichert"); }
+async function testConn(){
+  saveConn();
+  const ep=(state.settings.endpoint||"").trim();
+  if(!ep || /api\.anthropic\.com/i.test(ep)){ toast("Kein eigener Worker-Endpoint gesetzt"); return; }
+  toast("Teste Verbindung …");
+  try{
+    const t=await callAI("Antworte nur mit: OK", [{role:"user",content:"Test"}], {maxTokens:20});
+    toast(t && t.trim() ? "Verbindung ok ✓" : "Antwort leer — Worker prüfen");
+  }catch(e){ toast("Fehler: "+e.message); }
+}
 function exportData(){
   try{
     const blob=new Blob([JSON.stringify(state)],{type:"application/json"});
@@ -1700,7 +1730,7 @@ Object.assign(window, {
   openStation, toggleStationPart, completeStation, gotoNextStation, toggleCefr, renderLevelInfo, togglePreview,
   startPlacement, selectAnswer, scorePlacement, choosePlacement, choosePlacementSelf, abortPlacement,
   analyzeSong, resetSong, copyText,
-  toggleRoutineLang, setFocus, setLevel, setRegister, saveConn, exportData, importData, resetAll, replaceLevel,
+  toggleRoutineLang, setFocus, setLevel, setRegister, saveConn, testConn, exportData, importData, resetAll, replaceLevel,
   renderUnit, renderSong, renderSettings, renderVocabList, renderVocabItem, renderListen
 });
 
