@@ -138,6 +138,45 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--ink);}
 .song-context{border-top:1px solid var(--line-soft);padding-top:8px;}
 .song-gram b,.song-context b{color:var(--ink);margin-right:4px;}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms !important;}}
+
+/* Lernpfad */
+.lvl-band{display:flex;align-items:center;gap:10px;margin:22px 0 12px;}
+.lvl-band .lvl-chip{font-family:var(--display);font-weight:700;font-size:20px;}
+.lvl-band .lvl-meta{font-size:11px;color:var(--ink-faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.lvl-band .lvl-line{flex:1;height:1px;background:var(--line);}
+.pstation{display:flex;gap:14px;align-items:stretch;width:100%;background:none;border:none;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit;}
+.prail{position:relative;width:42px;flex:0 0 42px;display:flex;justify-content:center;}
+.prail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--line);}
+.pstation:first-child .prail::before{top:26px;}
+.pnode{position:relative;z-index:1;width:40px;height:40px;border-radius:50%;background:var(--card);border:2px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;margin-top:6px;color:var(--ink);}
+.pstation.done .pnode{background:var(--ink);color:#fff;border-color:var(--ink);}
+.pstation.active .pnode{border-color:var(--ink);box-shadow:0 0 0 5px var(--accent-tint);}
+.pstation.locked .pnode{color:var(--ink-faint);background:var(--paper);}
+.pcard{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:11px;}
+.pstation.active .pcard{border-color:var(--ink);}
+.pstation.locked{cursor:default;}
+.pstation.locked .pcard{opacity:.6;}
+.pcard .pc-t{font-weight:700;font-size:15.5px;}
+.pcard .pc-d{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+.pcard .pc-meta{font-size:11.5px;color:var(--ink-faint);margin-top:6px;}
+.milestone{display:flex;gap:14px;align-items:center;width:100%;}
+.milestone .prail{position:relative;width:42px;flex:0 0 42px;display:flex;justify-content:center;}
+.milestone .prail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--line);}
+.mnode{position:relative;z-index:1;width:30px;height:30px;background:var(--paper);border:2px solid var(--line);
+  transform:rotate(45deg);display:flex;align-items:center;justify-content:center;}
+.milestone.reached .mnode{background:var(--ink);border-color:var(--ink);}
+.mnode span{transform:rotate(-45deg);font-size:14px;color:#fff;}
+.milestone .ms-t{font-size:13px;font-weight:700;color:var(--ink-soft);}
+.milestone.reached .ms-t{color:var(--ink);}
+
+/* Einstufungstest */
+.q-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:12px;}
+.q-card .q-txt{font-weight:600;margin-bottom:10px;}
+.q-opt{display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px;margin-bottom:7px;font:inherit;font-size:14.5px;cursor:pointer;color:var(--ink);}
+.q-opt.sel{background:var(--ink);color:#fff;border-color:var(--ink);}
+
 </style>
 </head>
 <body>
@@ -487,110 +526,235 @@ function buildBrief(code, unit){
    ergeben sich ca. 6000–8000 Wörter bis C1.
    ========================================================= */
 const VOCAB_TAXONOMY = [
-  { c:"Grundlagen & Kommunikation", lv:"A1", t:[
+  { c:"Grundlagen & Kommunikation", lv:"A1", gr:"Präsens von sein/haben, Aussage- und Fragesätze", t:[
     "Begrüßungen und Verabschiedungen","Sich vorstellen","Höflichkeitsfloskeln (bitte, danke, Entschuldigung)",
     "Zahlen 0 bis 100","Große Zahlen und Ordnungszahlen","Uhrzeit und Tageszeiten",
     "Wochentage, Monate und Datum","Farben und Muster","Buchstabieren und das Alphabet",
     "Im Gespräch nachfragen und um Wiederholung bitten","Mengen, Maße und Größenangaben"]},
-  { c:"Mensch & Familie", lv:"A1", t:[
+  { c:"Mensch & Familie", lv:"A1", gr:"Possessivbegleiter, Adjektive (Grundform)", t:[
     "Familienmitglieder","Verwandtschaft erweitert","Aussehen und Körperbau beschreiben",
     "Charakter und Persönlichkeit","Lebensabschnitte und Alter","Beziehungsstatus und Zivilstand",
     "Freundschaft und Bekanntschaften","Jemanden kennenlernen"]},
-  { c:"Körper & Gesundheit", lv:"A1", t:[
+  { c:"Körper & Gesundheit", lv:"A1", gr:"Modalverben (können/müssen), Imperativ (Einstieg)", t:[
     "Körperteile","Gesicht und Kopf","Krankheiten und Symptome","Beim Arzt","In der Apotheke",
     "Medikamente und Behandlung","Beim Zahnarzt","Unfälle und Erste Hilfe","Gesunde Lebensweise",
     "Hygiene und Körperpflege","Schmerzen beschreiben"]},
-  { c:"Essen & Trinken", lv:"A1", t:[
+  { c:"Essen & Trinken", lv:"A1", gr:"Objektkasus, mögen/wollen, Mengenangaben", t:[
     "Obst","Gemüse","Fleisch und Fisch","Getränke","Frühstück","Süßigkeiten und Snacks",
     "Gewürze und Zutaten","Im Restaurant bestellen","Speisekarte und Gänge","Kochen und Zubereitung",
     "Küchengeräte und Geschirr","Ernährung und Diät"]},
-  { c:"Einkaufen", lv:"A2", t:[
+  { c:"Einkaufen", lv:"A2", gr:"Komparativ, Demonstrativa", t:[
     "Lebensmittel einkaufen","Im Supermarkt","Auf dem Markt","Preise und Bezahlen",
     "Im Bekleidungsgeschäft","Größen und Anprobieren","Elektronik kaufen","Reklamieren und Umtausch",
     "Geschäfte und Läden","Online-Shopping"]},
-  { c:"Wohnen & Haushalt", lv:"A2", t:[
+  { c:"Wohnen & Haushalt", lv:"A2", gr:"Ortspräpositionen, Ort vs. Richtung", t:[
     "Wohnungstypen","Zimmer im Haus","Möbel","In der Küche","Im Badezimmer","Haushaltsgeräte",
     "Wohnung mieten und suchen","Renovieren und Reparieren","Garten und Balkon","Nachbarschaft","Umzug"]},
-  { c:"Kleidung & Mode", lv:"A2", t:[
+  { c:"Kleidung & Mode", lv:"A2", gr:"Adjektivdeklination und -angleichung", t:[
     "Kleidungsstücke","Schuhe und Accessoires","Stoffe und Materialien","Stil und Mode","Schmuck und Uhren"]},
-  { c:"Alltag & Routinen", lv:"A2", t:[
+  { c:"Alltag & Routinen", lv:"A2", gr:"reflexive und trennbare Verben, Häufigkeit", t:[
     "Tagesablauf","Morgen- und Abendroutine","Hausarbeit und Putzen","Termine und Verabredungen",
     "Gewohnheiten und Häufigkeit","Pläne und Verpflichtungen"]},
-  { c:"Wetter & Zeit", lv:"A2", t:[
+  { c:"Wetter & Zeit", lv:"A2", gr:"unpersönliche Ausdrücke, Zeitangaben", t:[
     "Wetter","Jahreszeiten","Klima und Temperatur","Naturphänomene","Zeitangaben und Adverbien","Feiertage im Jahr"]},
-  { c:"Stadt & Orientierung", lv:"A2", t:[
+  { c:"Stadt & Orientierung", lv:"A2", gr:"Imperativ (Wegbeschreibung), Präpositionen", t:[
     "Gebäude und öffentliche Orte","Wegbeschreibung","Himmelsrichtungen und Lage","Sehenswürdigkeiten",
     "Behörden und Ämter","Bank und Geldautomat","Post und Pakete","Notdienste","Schilder und Hinweise"]},
-  { c:"Verkehr & Reisen", lv:"A2", t:[
+  { c:"Verkehr & Reisen", lv:"A2", gr:"Perfekt/Vergangenheit, nahe Zukunft", t:[
     "Verkehrsmittel","Mit dem Auto","Am Bahnhof und Zug","Am Flughafen und Flug","Im Hotel einchecken",
     "Camping und Unterkünfte","Reise planen und buchen","Urlaubsaktivitäten","Panne und Probleme unterwegs",
     "Tickets und Fahrpläne","Stadtrundfahrt und Tourismus"]},
-  { c:"Arbeit & Beruf", lv:"B1", t:[
+  { c:"Arbeit & Beruf", lv:"B1", gr:"Nebensätze (dass, weil), Relativsätze (Einstieg)", t:[
     "Berufe und Tätigkeiten","Am Arbeitsplatz","Büroausstattung","Bewerbung und Lebenslauf",
     "Vorstellungsgespräch","Gehalt und Arbeitsvertrag","Meetings und Teamarbeit","Selbstständigkeit",
     "Jobsuche und Arbeitslosigkeit","Karriere und Beförderung","Arbeitszeit und Pausen"]},
-  { c:"Bildung & Lernen", lv:"B1", t:[
+  { c:"Bildung & Lernen", lv:"B1", gr:"indirekte Fragen, Infinitiv mit zu", t:[
     "Schule und Klassen","Universität und Studium","Schulfächer","Prüfungen und Noten",
     "Sprachen lernen","Weiterbildung und Kurse","Forschung und Wissenschaft (Alltag)","Bibliothek und Lernmaterial"]},
-  { c:"Technik & Digitales", lv:"B1", t:[
+  { c:"Technik & Digitales", lv:"B1", gr:"Passiv (Einstieg)", t:[
     "Computer und Laptop","Smartphone und Apps","Internet und Webseiten","E-Mail und Nachrichten",
     "Soziale Medien","Software und Programme","Online-Sicherheit und Passwörter","Künstliche Intelligenz im Alltag"]},
-  { c:"Freizeit & Hobbys", lv:"B1", t:[
+  { c:"Freizeit & Hobbys", lv:"B1", gr:"Vergangenheit im Kontrast (Perfekt/Präteritum)", t:[
     "Hobbys allgemein","Musik und Instrumente","Film und Serien","Bücher und Lesen","Spiele und Brettspiele",
     "Fotografie","Handarbeit und Basteln","Sammeln und Tüfteln","Ausgehen und Veranstaltungen"]},
-  { c:"Sport", lv:"B1", t:[
+  { c:"Sport", lv:"B1", gr:"Komparativ/Superlativ, Zeitangaben", t:[
     "Sportarten allgemein","Fußball","Im Fitnessstudio","Wintersport","Wassersport",
     "Laufen und Ausdauer","Mannschaft und Wettkampf","Sportverletzungen"]},
-  { c:"Natur & Umwelt", lv:"B1", t:[
+  { c:"Natur & Umwelt", lv:"B1", gr:"Konnektoren (deshalb, trotzdem)", t:[
     "Haustiere","Wildtiere","Pflanzen und Bäume","Landschaften und Geografie","Umweltschutz",
     "Klimawandel","Müll und Recycling","Wetterextreme und Katastrophen","Energie und Ressourcen"]},
-  { c:"Gefühle & Beziehungen", lv:"B1", t:[
+  { c:"Gefühle & Beziehungen", lv:"B1", gr:"Bedingungssätze und Konjunktiv (Einstieg)", t:[
     "Grundgefühle","Komplexe Emotionen","Stimmungen und Laune","Liebe und Partnerschaft",
     "Konflikte und Streit","Versöhnung und Kompromiss","Empathie und Mitgefühl","Vertrauen und Enttäuschung"]},
-  { c:"Geld & Finanzen", lv:"B1", t:[
+  { c:"Geld & Finanzen", lv:"B1", gr:"Futur, Absichtssätze (um … zu)", t:[
     "Bankgeschäfte","Sparen und Ausgeben","Versicherungen","Steuern im Alltag","Online-Banking",
     "Budget und Haushaltsplan","Schulden und Kredite"]},
-  { c:"Gesundheitssystem & Medizin", lv:"B2", t:[
+  { c:"Gesundheitssystem & Medizin", lv:"B2", gr:"Passiv und Nominalstil", t:[
     "Krankenhaus und Stationen","Fachärzte und Fachrichtungen","Operationen und Eingriffe",
     "Psychische Gesundheit","Pflege und Alter","Ernährung und Diäten (medizinisch)",
     "Klinische Studien und Forschung","Diagnose und Untersuchung","Medizinische Geräte"]},
-  { c:"Gesellschaft & Soziales", lv:"B2", t:[
+  { c:"Gesellschaft & Soziales", lv:"B2", gr:"Nominalisierung, Konzessivsätze (obwohl)", t:[
     "Soziale Themen","Generationen und Familie heute","Migration und Integration","Gleichberechtigung",
     "Ehrenamt und Engagement","Armut und Reichtum","Wohnen und Stadtentwicklung","Bildungschancen"]},
-  { c:"Politik & Staat", lv:"B2", t:[
+  { c:"Politik & Staat", lv:"B2", gr:"komplexe Konnektoren, indirekte Rede (Einstieg)", t:[
     "Regierung und Staat","Wahlen und Demokratie","Gesetze und Recht","Internationale Beziehungen",
     "Parteien und Ideologien","Bürgerrechte und Pflichten","Verwaltung und Bürokratie","EU und globale Politik"]},
-  { c:"Wirtschaft", lv:"B2", t:[
+  { c:"Wirtschaft", lv:"B2", gr:"Partizipialkonstruktionen", t:[
     "Wirtschaft allgemein","Unternehmen und Markt","Globalisierung","Börse und Aktien",
     "Arbeitsmarkt","Konsum und Werbung","Start-ups und Innovation"]},
-  { c:"Medien & Kommunikation", lv:"B2", t:[
+  { c:"Medien & Kommunikation", lv:"B2", gr:"indirekte Rede", t:[
     "Nachrichten und Presse","Journalismus","Fernsehen und Radio","Werbung und Marketing",
     "Meinungsfreiheit","Fake News und Desinformation","Influencer und Online-Kultur"]},
-  { c:"Wissenschaft & Technik", lv:"B2", t:[
+  { c:"Wissenschaft & Technik", lv:"B2", gr:"Relativsätze, Passiv-Varianten", t:[
     "Naturwissenschaften","Medizin und Forschung","Raumfahrt und Astronomie","Energie und Strom",
     "Erfindungen und Patente","Digitalisierung","Biologie und Genetik","Physik und Chemie (Alltag)"]},
-  { c:"Kunst & Kultur", lv:"B2", t:[
+  { c:"Kunst & Kultur", lv:"B2", gr:"irrealer Konjunktiv, Vergangenheitsformen sicher", t:[
     "Bildende Kunst","Theater und Oper","Literatur und Genres","Architektur","Geschichte und Epochen",
     "Museen und Ausstellungen","Feste und Traditionen","Religion und Weltanschauung"]},
-  { c:"Sprache & Nuancen", lv:"C1", t:[
+  { c:"Sprache & Nuancen", lv:"C1", gr:"Stilebenen, Modalpartikeln, formell/informell", t:[
     "Konnektoren und Argumentation","Synonyme und Wortnuancen","Formelle vs. informelle Sprache",
     "Höfliche und diplomatische Formulierungen","Umgangssprache und Slang","Füllwörter und Gesprächspartikel",
     "Modalpartikeln und Abtönung","Wortbildung (Vor- und Nachsilben)"]},
-  { c:"Abstrakte Konzepte", lv:"C1", t:[
+  { c:"Abstrakte Konzepte", lv:"C1", gr:"komplexe Satzgefüge, Nominalstil", t:[
     "Philosophie und Ethik","Psychologie","Werte und Moral","Zeit, Wandel und Fortschritt",
     "Erfolg und Scheitern","Identität und Selbst","Glück und Lebenssinn","Risiko und Entscheidung"]},
-  { c:"Beruf & Fachsprache", lv:"C1", t:[
+  { c:"Beruf & Fachsprache", lv:"C1", gr:"Fachterminologie, Funktionsverbgefüge", t:[
     "Verhandlungen führen","Präsentationen halten","Projektmanagement","Recht und Verträge",
     "Wissenschaftliches Schreiben","Fachvokabular Medizin und klinische Studien","Finanzen und Controlling"]},
-  { c:"Redewendungen & Idiomatik", lv:"C1", t:[
+  { c:"Redewendungen & Idiomatik", lv:"C1", gr:"Kollokationen, idiomatische Strukturen", t:[
     "Häufige Redewendungen","Sprichwörter","Bildhafte Ausdrücke und Metaphern","Kollokationen (feste Wortpaare)",
     "Phrasal- bzw. Partikelverben","Witze, Ironie und Wortspiele"]},
+  { c:"Feinheiten & Konnotation", lv:"C2", gr:"Konnotation, Bedeutungsnuancen, präzise Wortwahl", t:[
+    "Feine Bedeutungsunterschiede","Konnotation und Register","Präzise Synonyme wählen","Stilfiguren",
+    "Verstärkung und Abtönung","Vage vs. präzise Sprache","Ton und Untertöne"]},
+  { c:"Rhetorik & Debatte", lv:"C2", gr:"rhetorische Mittel, Konzession, Argumentationsketten", t:[
+    "Argumentieren auf hohem Niveau","Überzeugen und Einwände entkräften","Diplomatische Sprache",
+    "Anspielungen und Ironie","Zitieren und Bezugnahme","Strukturierende Wendungen","Spontane Repliken"]},
+  { c:"Wissenschaft & Fachdiskurs", lv:"C2", gr:"akademischer Stil, Hypotaxe, Nominalisierung", t:[
+    "Wissenschaftssprache","Hypothesen und Schlussfolgerungen","Daten und Statistik versprachlichen",
+    "Fachdiskussion führen","Abstracts und Zusammenfassungen","Kritische Bewertung","Quellen einordnen"]},
+  { c:"Kultur, Literatur & Idiomatik", lv:"C2", gr:"literarische Stilmittel, kulturelle Referenzen", t:[
+    "Literarische Sprache","Kulturelle Anspielungen","Humor und Wortspiel","Dialekt und Soziolekt (Verständnis)",
+    "Sprichwörter vertieft","Sprachgeschichte im Alltag","Anspielungen erkennen"]},
 ];
 function vocabId(code, ci, ti){ return "v-"+code+"-"+ci+"-"+ti; }
 function vocabCounts(code){
   let total=0, done=0;
   VOCAB_TAXONOMY.forEach((cat,ci)=>cat.t.forEach((_,ti)=>{ total++; if(unitDone(code, vocabId(code,ci,ti))) done++; }));
   return { total, done };
+}
+
+/* =========================================================
+   LERNPFAD A1–C2 (Stationen mit Vokabel + Grammatik/Gespräch)
+   Station-Tupel: [Titel, Thema, Kann-Ziel, Grammatik-Fokus, [Vokabelthemen]]
+   ========================================================= */
+const CEFR = ["A1","A2","B1","B2","C1","C2"];
+const CEFR_SKILLS = [
+  ["hoeren","Hören"],["lesen","Lesen"],["gespraech","An Gesprächen teilnehmen"],
+  ["sprechen","Zusammenhängendes Sprechen"],["schreiben","Schreiben"]
+];
+/* Kann-Beschreibungen nach dem Gemeinsamen Europäischen Referenzrahmen
+   (Selbstbeurteilungsraster, © Europäische Union / Europarat) — hier komprimiert. */
+const CEFR_GRID = {
+  A1:{
+    hoeren:"Verstehst vertraute Wörter und ganz einfache Sätze zu dir, deiner Familie und konkreten Dingen — wenn langsam und deutlich gesprochen wird.",
+    lesen:"Verstehst einzelne vertraute Namen, Wörter und einfache Sätze, z. B. auf Schildern, Plakaten oder in Katalogen.",
+    gespraech:"Verständigst dich einfach, wenn dein Gegenüber langsam wiederholt und hilft; stellst und beantwortest einfache Fragen zu sehr vertrauten Themen.",
+    sprechen:"Beschreibst mit einfachen Wendungen Menschen, die du kennst, und wo du wohnst.",
+    schreiben:"Schreibst eine kurze, einfache Postkarte und füllst Formulare mit persönlichen Angaben aus."
+  },
+  A2:{
+    hoeren:"Verstehst einzelne Sätze und häufige Wörter zu wichtigen Alltagsthemen (Person, Familie, Einkaufen, Arbeit, Umgebung) und das Wesentliche kurzer, klarer Mitteilungen.",
+    lesen:"Liest kurze, einfache Texte und findest konkrete Infos in Alltagstexten (Anzeigen, Prospekte, Speisekarten, Fahrpläne); verstehst kurze persönliche Briefe.",
+    gespraech:"Verständigst dich in einfachen Routinesituationen mit direktem Informationsaustausch und führst kurze Kontaktgespräche.",
+    sprechen:"Beschreibst mit mehreren Sätzen Familie, Leute, Wohnsituation, Ausbildung und deine (frühere) Arbeit.",
+    schreiben:"Schreibst kurze Notizen und Mitteilungen sowie einen einfachen persönlichen Brief."
+  },
+  B1:{
+    hoeren:"Verstehst die Hauptpunkte bei klarer Standardsprache zu vertrauten Themen (Arbeit, Schule, Freizeit) und Kerninfos aus Radio/TV bei langsamer, deutlicher Sprache.",
+    lesen:"Verstehst Texte mit gebräuchlicher Alltags- und Berufssprache sowie private Briefe über Ereignisse, Gefühle und Wünsche.",
+    gespraech:"Bewältigst die meisten Reisesituationen und nimmst ohne Vorbereitung an Gesprächen über vertraute Alltagsthemen teil.",
+    sprechen:"Erzählst zusammenhängend von Erfahrungen und Zielen, begründest kurz Meinungen und Pläne und gibst Handlungen von Buch/Film wieder.",
+    schreiben:"Schreibst einfache zusammenhängende Texte zu vertrauten Themen und persönliche Briefe über Erfahrungen und Eindrücke."
+  },
+  B2:{
+    hoeren:"Verstehst längere Redebeiträge und komplexe Argumentation bei einigermaßen vertrautem Thema sowie die meisten Nachrichten, Reportagen und Filme in Standardsprache.",
+    lesen:"Verstehst Artikel und Berichte zu Gegenwartsthemen mit klaren Standpunkten sowie zeitgenössische literarische Prosa.",
+    gespraech:"Verständigst dich spontan und fließend, beteiligst dich aktiv an Diskussionen und begründest deine Ansichten.",
+    sprechen:"Stellst viele Themen klar und detailliert dar, erläuterst einen Standpunkt und nennst Vor- und Nachteile.",
+    schreiben:"Schreibst klare, detaillierte Texte zu vielen Themen und legst in Aufsatz/Bericht Argumente dar."
+  },
+  C1:{
+    hoeren:"Folgst längeren, auch unstrukturierten Redebeiträgen mit impliziten Zusammenhängen und verstehst Sendungen und Filme ohne große Mühe.",
+    lesen:"Verstehst lange, komplexe Sach- und Literaturtexte, nimmst Stilunterschiede wahr und verstehst Fachartikel auch außerhalb deines Gebiets.",
+    gespraech:"Drückst dich spontan und fließend aus, nutzt die Sprache flexibel im sozialen und beruflichen Leben und verknüpfst Beiträge geschickt.",
+    sprechen:"Stellst komplexe Sachverhalte ausführlich dar, verbindest Themenpunkte und schließt angemessen ab.",
+    schreiben:"Schreibst klar und gut strukturiert, stellst Ansichten ausführlich dar und wählst den passenden Stil."
+  },
+  C2:{
+    hoeren:"Verstehst gesprochene Sprache mühelos — live oder in Medien, auch bei schnellem Tempo; brauchst nur kurz, dich an einen Akzent zu gewöhnen.",
+    lesen:"Liest praktisch jeden Text mühelos, auch abstrakte oder komplexe (Handbücher, Fachartikel, literarische Werke).",
+    gespraech:"Beteiligst dich mühelos an allen Gesprächen, kennst Redewendungen, drückst feine Nuancen aus und formulierst Stockungen unbemerkt um.",
+    sprechen:"Stellst Sachverhalte klar, flüssig und stilistisch passend dar, baust logisch auf und erleichterst dem Publikum das Merken.",
+    schreiben:"Schreibst klar, flüssig und stilistisch passend, verfasst anspruchsvolle Texte und fasst Fachtexte und literarische Werke zusammen."
+  }
+};
+/* =========================================================
+   LERNPFAD A1–C2 — eine Station pro Wortschatz-Kategorie
+   (Kategorie = Station mit Grammatik-Fokus; Vokabel-Häkchen
+   sind dieselben wie im Wortschatz-Tool)
+   ========================================================= */
+let _stCache=null;
+function stations(){
+  if(_stCache) return _stCache;
+  _stCache = VOCAB_TAXONOMY.map((cat,ci)=>({
+    ci, level:cat.lv, title:cat.c, theme:cat.c,
+    can_do:"Kann über „"+cat.c+"“ sprechen und den Wortschatz dazu anwenden",
+    grammar:cat.gr||"", vocab:cat.t
+  }));
+  return _stCache;
+}
+function stationAt(ci){ return stations()[ci]; }
+function lessonId(code,ci){ return code+"-pl-"+ci; }
+/* Vokabel-Häkchen nutzen dieselbe ID wie das Wortschatz-Tool: vocabId(code,ci,k) */
+function stationDone(code,ci){
+  if(!unitDone(code,lessonId(code,ci))) return false;
+  const v=stationAt(ci).vocab;
+  for(let k=0;k<v.length;k++) if(!unitDone(code,vocabId(code,ci,k))) return false;
+  return true;
+}
+function stationVocabDone(code,ci){
+  const v=stationAt(ci).vocab; let d=0;
+  for(let k=0;k<v.length;k++) if(unitDone(code,vocabId(code,ci,k))) d++;
+  return d;
+}
+function stationUnlocked(code,ci){ if(state.settings.preview) return true; if(ci<=0) return true; return stationDone(code,ci-1); }
+function nextStation(code){
+  const arr=stations();
+  for(let ci=0;ci<arr.length;ci++){ if(!stationDone(code,ci) && stationUnlocked(code,ci)) return arr[ci]; }
+  return null;
+}
+function pathProgress(code){
+  const arr=stations(); let done=0;
+  arr.forEach(s=>{ if(stationDone(code,s.ci)) done++; });
+  return { total:arr.length, done };
+}
+function levelStations(level){ return stations().filter(s=>s.level===level); }
+function levelDone(code, level){ return levelStations(level).every(s=>stationDone(code,s.ci)); }
+function isLastOfLevel(ci){ const arr=stations(); return ci===arr.length-1 || arr[ci+1].level!==arr[ci].level; }
+function markStationComplete(code,ci){
+  state.langs[code].progress[lessonId(code,ci)]="done";
+  stationAt(ci).vocab.forEach((_,k)=>{ state.langs[code].progress[vocabId(code,ci,k)]="done"; });
+}
+function applyPlacement(code, level){
+  const ti=CEFR.indexOf(level);
+  stations().forEach(s=>{ if(CEFR.indexOf(s.level)<ti) markStationComplete(code,s.ci); });
+  state.langs[code].level=level; state.langs[code].placed=true;
+  saveState();
+}
+function setPart(code,id,done){
+  if(done){ if(!unitDone(code,id)) recordSessionDone(code,id); }
+  else { state.langs[code].progress[id]=undefined; saveState(); }
 }
 
 /* =========================================================
@@ -631,12 +795,7 @@ function findUnit(code, id){
   for(const m of getModules(code)){ const u=m.units.find(x=>x.id===id); if(u) return u; }
   return (state.langs[code].custom||[]).find(x=>x.id===id) || null;
 }
-function langProgress(code){
-  let total=0, done=0;
-  getModules(code).forEach(m=>m.units.forEach(u=>{ total++; if(unitDone(code,u.id)) done++; }));
-  (state.langs[code].custom||[]).forEach(u=>{ total++; if(unitDone(code,u.id)) done++; });
-  return { total, done };
-}
+function langProgress(code){ return pathProgress(code); }
 
 /* =========================================================
    Router
@@ -646,6 +805,9 @@ function render(){
   applyRegister();
   if(view.name==="home") renderHome();
   else if(view.name==="lang") renderLang();
+  else if(view.name==="station") renderStation();
+  else if(view.name==="levelinfo") renderLevelInfo();
+  else if(view.name==="placement") renderPlacement();
   else if(view.name==="unit") renderUnit();
   else if(view.name==="song") renderSong();
   else if(view.name==="listen") renderListen();
@@ -695,16 +857,22 @@ function renderHome(){
   }).join("");
 
   const fl = LANG_CONFIG[focus];
-  const nx = nextUnit(focus);
   let focusCard;
-  if(nx && nx.unit){
-    const u=nx.unit;
-    focusCard = `<button class="task" onclick="openUnit('${focus}','${u.id}')">
+  if(!state.langs[focus].placed){
+    focusCard = `<button class="task" onclick="go('placement',{lang:'${focus}'})">
       <span class="tk-ic">▸</span>
-      <div><div class="tk-t">${esc(u.title)}</div><div class="tk-d">${fl.name} · ${esc(u.can_do||u.theme)}</div></div>
+      <div><div class="tk-t">Einstufungstest ${fl.name}</div><div class="tk-d">Finde deinen Startpunkt A1–C2</div></div>
       <span class="tk-go">›</span></button>`;
   }else{
-    focusCard = `<div class="card"><div class="tk-t">${fl.flag} ${fl.name}</div><p class="hint" style="margin-top:6px">Alle Einheiten erledigt 🎉</p></div>`;
+    const nx = nextStation(focus);
+    if(nx){
+      focusCard = `<button class="task" onclick="openStation('${focus}',${nx.ci})">
+        <span class="tk-ic">▸</span>
+        <div><div class="tk-t">${esc(nx.title)}</div><div class="tk-d">${fl.name} · ${nx.level} · ${esc(nx.grammar)}</div></div>
+        <span class="tk-go">›</span></button>`;
+    }else{
+      focusCard = `<div class="card"><div class="tk-t">${fl.flag} ${fl.name}</div><p class="hint" style="margin-top:6px">Pfad abgeschlossen 🎉</p></div>`;
+    }
   }
 
   const others = (state.routine.langs||Object.keys(LANG_CONFIG)).filter(c=>c!==focus);
@@ -768,80 +936,354 @@ function toggleFlowOpen(){ state.settings.flowOpen = !(state.settings.flowOpen!=
    SPRACHE (Tab)
    ========================================================= */
 function openLang(code){ go("lang",{lang:code}); }
-async function renderLang(){
+function renderLang(){
   const code = view.lang, l = L(code);
-  const p = langProgress(code);
+  const p = pathProgress(code);
+  const placed = !!state.langs[code].placed;
   app().innerHTML = `
     <div class="topbar">
       <div class="ph-title">${l.flag} ${l.name}</div>
       <button class="iconbtn" onclick="go('settings')" aria-label="Einstellungen">⚙</button>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin:0 0 16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin:0 0 14px;flex-wrap:wrap;">
       <span class="chip">Niveau ${l.level}</span>
-      ${p.total?`<span class="chip">${p.done}/${p.total} erledigt</span>`:""}
+      <span class="chip">${p.done}/${p.total} Stationen</span>
+      <button class="btn ghost sm" style="width:auto;padding:4px 10px;margin-left:auto" onclick="togglePreview()">${state.settings.preview?'Vorschau: an':'Alle ansehen'}</button>
     </div>
+    ${state.settings.preview?`<p class="hint" style="margin:-6px 0 12px">Vorschau-Modus: alle Stationen sind zum Ansehen entsperrt. Dein Fortschritt bleibt unverändert.</p>`:""}
+
+    ${!placed?`<div class="card" style="border-color:var(--ink)">
+      <div class="pc-t">Wo stehst du?</div>
+      <p class="hint" style="margin:6px 0 12px">Mach den Einstufungstest (A1–C2) — dann startet dein Pfad an der passenden Station.</p>
+      <button class="btn" onclick="go('placement',{lang:'${code}'})">Einstufungstest starten</button>
+      <button class="btn ghost sm" style="margin-top:8px;width:auto" onclick="go('placement',{lang:'${code}',self:1})">Selbst einschätzen</button>
+    </div>`:""}
 
     <p class="eyebrow">Werkzeuge</p>
-    <button class="btn soft" onclick="go('vocab',{lang:'${code}'})">Wortschatz-Themen</button>
-    <div class="row" style="margin:10px 0">
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn soft sm" onclick="go('vocab',{lang:'${code}'})">Wortschatz</button>
       <button class="btn soft sm" onclick="go('listen',{lang:'${code}'})">Hören</button>
       <button class="btn soft sm" onclick="go('song',{lang:'${code}'})">Songtext</button>
-      <button class="btn soft sm" onclick="addCustomTopic('${code}')">Eigenes Thema</button>
     </div>
     <button class="btn ghost" onclick="openLangua()">Langua öffnen ↗</button>
 
-    <p class="eyebrow" style="margin-top:24px">Lernplan</p>
-    <div id="planBody"></div>
+    <p class="eyebrow" style="margin-top:22px">Dein Pfad</p>
+    <div class="path">${renderPathHTML(code)}</div>
   `;
-  paintPlan(code);
-}
-function paintPlan(code){
-  const lang = state.langs[code], box = document.getElementById("planBody");
-  if(!box) return;
-  const mods = getModules(code);
-  let html = "";
-  if((lang.custom||[]).length){
-    html += `<div class="module-head">Eigene Themen</div>`;
-    lang.custom.forEach(u=>{
-      html += `<button class="unit ${unitDone(code,u.id)?'done':''}" onclick="openUnit('${code}','${u.id}')">
-        <span class="unit-num">${unitDone(code,u.id)?'✓':'★'}</span>
-        <div><div class="unit-title">${esc(u.title)}</div><div class="unit-can">${esc(u.can_do||u.theme)}</div></div>
-        <span class="unit-state">›</span></button>`;
+  if(view.focusStation){
+    requestAnimationFrame(()=>{
+      const el=document.querySelector(".pstation.active");
+      if(el) el.scrollIntoView({behavior:"smooth", block:"center"});
     });
   }
-  mods.forEach((mod,mi)=>{
-    const open = lang._open===mi;
-    const doneCount = mod.units.filter(u=>unitDone(code,u.id)).length;
-    html += `<button class="mod-toggle" onclick="toggleModule('${code}',${mi})">
-        <span class="mt-name">${mi+1}. ${esc(mod.name)}</span>
-        <span class="mt-x">${doneCount}/${mod.units.length} ${open?'▲':'▾'}</span>
-      </button>`;
-    if(open){
-      mod.units.forEach((u,k)=>{
-        html += `<button class="unit ${unitDone(code,u.id)?'done':''}" onclick="openUnit('${code}','${u.id}')">
-          <span class="unit-num">${unitDone(code,u.id)?'✓':(k+1)}</span>
-          <div><div class="unit-title">${esc(u.title)}</div><div class="unit-can">${esc(u.can_do||u.theme)} · ${esc(u.grammar)}</div></div>
-          <span class="unit-state">›</span></button>`;
-      });
+}
+function renderPathHTML(code){
+  const arr=stations();
+  let html=""; let curLevel=null;
+  arr.forEach((s,idx)=>{
+    if(s.level!==curLevel){
+      curLevel=s.level;
+      const lvl=levelStations(s.level);
+      const dn=lvl.filter(x=>stationDone(code,x.ci)).length;
+      html += `<button class="lvl-band" style="width:100%;background:none;border:none;cursor:pointer;text-align:left" onclick="go('levelinfo',{lang:'${code}',level:'${s.level}'})"><span class="lvl-chip">${s.level}</span><span class="lvl-meta">${dn}/${lvl.length}</span><span class="lvl-line"></span><span style="color:var(--ink-faint);font-size:13px">Kann-Beschreibungen ›</span></button>`;
+    }
+    const done=stationDone(code,s.ci);
+    const unlocked=stationUnlocked(code,s.ci);
+    const active=unlocked && !done;
+    const cls = done?"done":(unlocked?(active?"active":""):"locked");
+    const tag = done?"✓":(unlocked? "▸" : "🔒");
+    const onclick = unlocked? `onclick="openStation('${code}',${s.ci})"` : "";
+    const el = unlocked? "button" : "div";
+    const vd=stationVocabDone(code,s.ci);
+    html += `<${el} class="pstation ${cls}" ${onclick}>
+      <div class="prail"><div class="pnode">${tag}</div></div>
+      <div class="pcard">
+        <div class="pc-t">${esc(s.title)}${active?' <span class="chip" style="font-size:10px;padding:1px 8px;vertical-align:middle">Weiter hier</span>':''}</div>
+        <div class="pc-d">Grammatik: ${esc(s.grammar)}</div>
+        <div class="pc-meta">${vd}/${s.vocab.length} Vokabelthemen${unitDone(code,lessonId(code,s.ci))?' · Gespräch ✓':''}</div>
+      </div>
+    </${el}>`;
+    if(isLastOfLevel(s.ci)){
+      const reached=levelDone(code,s.level);
+      html += `<div class="milestone ${reached?'reached':''}">
+        <div class="prail"><div class="mnode"><span>${reached?'★':''}</span></div></div>
+        <div class="ms-t">Meilenstein: ${s.level} ${reached?'abgeschlossen':'– alle Stationen abschließen'}</div>
+      </div>`;
     }
   });
-  box.innerHTML = html;
+  return html;
 }
-function toggleModule(code, mi){
-  const lang = state.langs[code];
-  lang._open = (lang._open===mi)? undefined : mi;
-  paintPlan(code);
+
+/* ----- Station ----- */
+function openStation(code,ci){ go("station",{lang:code, ci}); }
+function renderStation(){
+  const code=view.lang, l=L(code), ci=view.ci;
+  const s=stationAt(ci);
+  const lid=lessonId(code,ci), lessonOk=unitDone(code,lid);
+  const lessonPrompt=buildLanguaPrompt(code,{theme:s.theme,can_do:s.can_do,grammar:s.grammar});
+  const vocabHTML=s.vocab.map((topic,k)=>{
+    const vid=vocabId(code,ci,k), ok=unitDone(code,vid);
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="toggleStationPart('${code}',${ci},'v',${k})" style="width:30px;height:30px;border-radius:50%;border:1.5px solid ${ok?'var(--ink)':'var(--line)'};background:${ok?'var(--ink)':'transparent'};color:${ok?'#fff':'var(--ink)'};flex:0 0 auto;cursor:pointer;font-size:14px">${ok?'✓':''}</button>
+        <div style="flex:1"><b>${esc(topic)}</b></div>
+        <button class="btn soft sm" style="width:auto" onclick="copyText(${esc(JSON.stringify(topic))})">Kopieren</button>
+      </div>
+    </div>`;
+  }).join("");
+  const done=stationDone(code,ci);
+  const vd=stationVocabDone(code,ci);
+  app().innerHTML = `
+    <button class="back" onclick="go('lang',{lang:'${code}'})">‹ Pfad</button>
+    <h1 class="page-title">${esc(s.title)}</h1>
+    <p class="page-sub">${l.flag} ${l.name} · ${s.level}</p>
+
+    ${done?`<div class="card" style="border-color:var(--ink)"><b>✓ Station abgeschlossen</b><div class="hint" style="margin-top:4px">Die nächste Station ist freigeschaltet.</div></div>`:""}
+
+    <p class="eyebrow">1 · Grammatik & Gespräch</p>
+    <div class="card">
+      <p class="hint" style="margin:0 0 10px"><b>CEFR-Ziel (${s.level}):</b> ${esc(CEFR_GRID[s.level].gespraech)}</p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <button onclick="toggleStationPart('${code}',${ci},'l',0)" style="width:30px;height:30px;border-radius:50%;border:1.5px solid ${lessonOk?'var(--ink)':'var(--line)'};background:${lessonOk?'var(--ink)':'transparent'};color:${lessonOk?'#fff':'var(--ink)'};flex:0 0 auto;cursor:pointer;font-size:14px">${lessonOk?'✓':''}</button>
+        <div style="flex:1"><b>${esc(s.grammar)}</b><div class="hint">Gespräch zum Thema in Langua</div></div>
+      </div>
+      <div class="brief-prompt">${esc(lessonPrompt)}</div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sm" onclick="copyText(${esc(JSON.stringify(lessonPrompt))})">Prompt kopieren</button>
+        <button class="btn ghost sm" onclick="openLangua()" style="line-height:1.4">Langua ↗</button>
+      </div>
+    </div>
+
+    <p class="eyebrow" style="margin-top:18px">2 · Vokabeln <span style="text-transform:none;font-weight:600;color:var(--ink-faint)">— ${vd}/${s.vocab.length} · pro Thema in Langua Flashcards (20–30, „Related to a topic")</span></p>
+    ${vocabHTML}
+
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost sm" onclick="go('listen',{lang:'${code}',topic:'${esc(s.theme).replace(/'/g,"\\'")}'})">♪ Hörtext</button>
+      ${!done?`<button class="btn sm" onclick="completeStation('${code}',${ci})">Alles erledigt</button>`:`<button class="btn sm" onclick="gotoNextStation('${code}')">Nächste Station →</button>`}
+    </div>
+  `;
 }
-function addCustomTopic(code){
-  const theme = prompt("Eigenes Thema (z. B. Beim Arzt, Klinische Studien, Wohnung mieten):");
-  if(!theme || !theme.trim()) return;
-  const grammar = prompt("Grammatik-Fokus (optional, z. B. Perfekt, Konjunktiv):") || "";
-  const u = { id:"custom-"+Date.now(), module:"Eigene Themen", title:theme.trim(), theme:theme.trim(), can_do:"Eigenes Thema", grammar:(grammar.trim()||"frei") };
-  state.langs[code].custom = state.langs[code].custom||[];
-  state.langs[code].custom.unshift(u);
-  saveState();
-  openUnit(code, u.id);
+function toggleStationPart(code,ci,kind,k){
+  const id = kind==='l'? lessonId(code,ci) : vocabId(code,ci,k);
+  const wasDone=stationDone(code,ci);
+  setPart(code,id,!unitDone(code,id));
+  const nowDone=stationDone(code,ci);
+  renderStation();
+  if(!wasDone && nowDone) toast("Station abgeschlossen 🎉");
 }
+function completeStation(code,ci){
+  markStationComplete(code,ci);
+  recordSessionDone(code, lessonId(code,ci));
+  toast("Station abgeschlossen 🎉 Streak "+state.streak.current);
+  renderStation();
+}
+function gotoNextStation(code){
+  const f=nextStation(code);
+  if(f) openStation(code,f.ci); else go("lang",{lang:code});
+}
+function togglePreview(){ state.settings.preview=!state.settings.preview; saveState(); render(); }
+
+/* ----- Niveau-Detail (CEFR-Kann-Beschreibungen + Selbsteinschätzung) ----- */
+function cefrChecked(code,level,skill){ const c=state.langs[code].cefr||{}; return !!(c[level]&&c[level][skill]); }
+function toggleCefr(code,level,skill){
+  state.langs[code].cefr = state.langs[code].cefr||{};
+  state.langs[code].cefr[level] = state.langs[code].cefr[level]||{};
+  state.langs[code].cefr[level][skill] = !state.langs[code].cefr[level][skill];
+  saveState(); renderLevelInfo();
+}
+function renderLevelInfo(){
+  const code=view.lang, l=L(code), level=view.level, grid=CEFR_GRID[level];
+  const lvl=levelStations(level);
+  const checks=CEFR_SKILLS.map(([key,label])=>{
+    const on=cefrChecked(code,level,key);
+    return `<div class="card">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <button onclick="toggleCefr('${code}','${level}','${key}')" style="width:28px;height:28px;border-radius:50%;border:1.5px solid ${on?'var(--ink)':'var(--line)'};background:${on?'var(--ink)':'transparent'};color:${on?'#fff':'var(--ink)'};flex:0 0 auto;cursor:pointer;font-size:13px;margin-top:1px">${on?'✓':''}</button>
+        <div style="flex:1"><b>${label}</b><div class="hint" style="margin-top:4px;color:var(--ink-soft)">${esc(grid[key])}</div></div>
+      </div>
+    </div>`;
+  }).join("");
+  const checkedCount=CEFR_SKILLS.filter(([k])=>cefrChecked(code,level,k)).length;
+  const stationRows=lvl.map(s=>{
+    const done=stationDone(code,s.ci), unlocked=stationUnlocked(code,s.ci);
+    const tag=done?"✓":(unlocked?"▸":"🔒");
+    const el=unlocked?"button":"div";
+    const onclick=unlocked?`onclick="openStation('${code}',${s.ci})"`:"";
+    return `<${el} class="unit ${done?'done':''}" ${onclick} ${unlocked?'':'style="opacity:.55"'}>
+      <span class="unit-num">${tag}</span>
+      <div><div class="unit-title">${esc(s.title)}</div><div class="unit-can">${esc(s.grammar)}</div></div>
+      <span class="unit-state">›</span></${el}>`;
+  }).join("");
+  const dn=lvl.filter(s=>stationDone(code,s.ci)).length;
+  app().innerHTML = `
+    <button class="back" onclick="go('lang',{lang:'${code}'})">‹ Pfad</button>
+    <h1 class="page-title">Niveau ${level}</h1>
+    <p class="page-sub">${l.flag} ${l.name} · ${dn}/${lvl.length} Stationen · Selbsteinschätzung ${checkedCount}/5</p>
+
+    <p class="eyebrow">Das kannst du auf ${level} (CEFR)</p>
+    <p class="hint" style="margin:-8px 0 12px">Hake ab, was schon zutrifft — so siehst du, wie nah du am Niveau bist.</p>
+    ${checks}
+
+    <p class="eyebrow" style="margin-top:18px">Stationen auf ${level}</p>
+    ${stationRows}
+
+    <p class="hint" style="margin-top:14px">Kann-Beschreibungen nach dem Gemeinsamen Europäischen Referenzrahmen (Selbstbeurteilungsraster), komprimiert.</p>
+  `;
+}
+
+/* =========================================================
+   EINSTUFUNGSTEST (A1–C2)
+   ========================================================= */
+let placeT = null;
+const SELF_DESC = {
+  A1:"Einzelne Wörter und einfachste Sätze, sich vorstellen.",
+  A2:"Einfache Alltagssituationen, kurze Routinegespräche.",
+  B1:"Zusammenhängend über vertraute Themen sprechen, Meinung äußern.",
+  B2:"Fließend diskutieren, komplexere Themen, kaum Anstrengung.",
+  C1:"Spontan und flexibel, auch anspruchsvolle/abstrakte Themen.",
+  C2:"Müheloses, präzises, nuanciertes Verständnis und Ausdruck."
+};
+function renderPlacement(){
+  const code=view.lang, l=L(code);
+  if(view.self){ renderSelfAssess(code); return; }
+  if(placeT && placeT.code===code && placeT.questions){
+    if(placeT.submitted) renderPlacementResult(); else renderPlacementQuestions();
+    return;
+  }
+  app().innerHTML = `
+    <button class="back" onclick="go('lang',{lang:'${code}'})">‹ Zurück</button>
+    <h1 class="page-title">Einstufungstest</h1>
+    <p class="page-sub">${l.flag} ${l.name} · A1 bis C2</p>
+    <div class="card">
+      <p style="margin:0 0 12px">Rund 30 Aufgaben (5 pro Niveau A1–C2) zu Grammatik, Wortschatz und Leseverständnis, mit steigender Schwierigkeit. Danach startet dein Pfad an der passenden Station.</p>
+      <button class="btn" onclick="startPlacement('${code}')">Test starten</button>
+      <button class="btn ghost sm" style="margin-top:10px;width:auto" onclick="go('placement',{lang:'${code}',self:1})">Lieber selbst einschätzen</button>
+      <p class="hint" style="margin:12px 0 0">Der Test wird per KI erstellt — dafür muss die KI-Verbindung in den Einstellungen funktionieren. Ohne KI: „Selbst einschätzen".</p>
+    </div>
+  `;
+}
+async function startPlacement(code){
+  const l=L(code);
+  app().innerHTML=loadingHTML("Einstufungstest wird erstellt … (0/6)");
+  const results=await runPool(CEFR, 3, async(lv)=>{
+    const reading = (lv==="A1") ? "" : " sowie 1 Leseverständnis (2–3 Sätze kurzer Text + Frage dazu)";
+    const sys="Du erstellst Einstufungsaufgaben. Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Array, ohne Markdown.";
+    const usr=`Sprache: ${l.aiName}. Niveau: ${lv} (GER-Skala). Erstelle 5 Multiple-Choice-Aufgaben exakt auf ${lv}-Niveau, die typische Schwierigkeiten dieses Niveaus prüfen: Grammatik und Wortschatz${reading}. JSON-Array, jedes Objekt: {"type":"Grammatik|Wortschatz|Leseverständnis","context":"<nur bei Leseverständnis ein kurzer Text in ${l.aiName}, sonst leerer String>","q":"<Aufgabe/Lückensatz/Frage in ${l.aiName}>","options":["A","B","C","D"],"answer":<Index 0-3 der einzig richtigen Option>}. Genau eine Option ist eindeutig richtig.`;
+    let last;
+    for(let a=0;a<4;a++){
+      if(a) await sleep(500*a+Math.floor(Math.random()*300));
+      try{
+        const txt=await callAI(sys,[{role:"user",content:usr}],{maxTokens:2000});
+        let arr; try{ arr=parseJSON(txt); }catch(e){ arr=extractObjects(txt); }
+        const items=(arr||[]).filter(o=>o&&o.q&&Array.isArray(o.options)&&o.options.length>=2&&typeof o.answer==="number")
+          .map(o=>({ level:lv, type:String(o.type||"Grammatik"), context:String(o.context||""), q:String(o.q), options:o.options.map(String), answer:o.answer }));
+        if(items.length) return items;
+        last=new Error("leer");
+      }catch(e){ last=e; }
+    }
+    return [];
+  }, (dn,tt)=>{ const el=app().querySelector(".loading div:last-child"); if(el) el.textContent=`Einstufungstest wird erstellt … (${dn}/${tt})`; });
+  let qs=[]; results.forEach(r=>{ if(Array.isArray(r)) qs=qs.concat(r); });
+  if(qs.length<8){
+    app().innerHTML=`<button class="back" onclick="go('placement',{lang:'${code}'})">‹ Zurück</button><div class="err">Der Test konnte nicht erstellt werden. Prüfe die KI-Verbindung.</div>
+      <button class="btn soft" style="margin-top:10px" onclick="startPlacement('${code}')">Erneut</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('placement',{lang:'${code}',self:1})">Selbst einschätzen</button>`;
+    return;
+  }
+  placeT={ code, questions:qs, answers:new Array(qs.length).fill(-1), submitted:false };
+  renderPlacementQuestions();
+}
+function renderPlacementQuestions(){
+  const code=placeT.code, l=L(code);
+  let curLevel=null;
+  const cards=placeT.questions.map((q,i)=>{
+    let head="";
+    if(q.level!==curLevel){ curLevel=q.level; head=`<div class="lvl-band"><span class="lvl-chip">${q.level}</span><span class="lvl-line"></span></div>`; }
+    const ctx=q.context?`<div class="brief-prompt" style="margin-bottom:10px">${esc(q.context)}</div>`:"";
+    const opts=q.options.map((o,j)=>`<button class="q-opt ${placeT.answers[i]===j?'sel':''}" onclick="selectAnswer(${i},${j})">${esc(o)}</button>`).join("");
+    return `${head}<div class="q-card" id="q${i}"><div class="q-txt">${i+1}. ${esc(q.q)} <span style="color:var(--ink-faint);font-weight:400">(${esc(q.type||q.level)})</span></div>${ctx}${opts}</div>`;
+  }).join("");
+  const answered=placeT.answers.filter(a=>a>=0).length;
+  app().innerHTML=`
+    <button class="back" onclick="abortPlacement('${code}')">‹ Abbrechen</button>
+    <h1 class="page-title">Einstufungstest</h1>
+    <p class="page-sub">${l.flag} ${l.name} · ${answered}/${placeT.questions.length} beantwortet</p>
+    <p class="hint" style="margin:-8px 0 14px">Beantworte so viel du sicher kannst. Wenn du nichts mehr verstehst, ist das dein Niveau — du musst nicht raten.</p>
+    ${cards}
+    <button class="btn" id="subBtn" ${answered<placeT.questions.length?'disabled style="opacity:.5"':''} onclick="scorePlacement()">Auswerten</button>
+    <div style="height:24px"></div>
+  `;
+}
+function selectAnswer(i,j){
+  placeT.answers[i]=j;
+  const cont=document.getElementById("q"+i);
+  if(cont){ cont.querySelectorAll(".q-opt").forEach((b,idx)=>b.classList.toggle("sel",idx===j)); }
+  const answered=placeT.answers.filter(a=>a>=0).length;
+  const sub=document.getElementById("subBtn");
+  const subtitle=document.querySelector(".page-sub");
+  if(subtitle) subtitle.textContent=`${L(placeT.code).flag} ${L(placeT.code).name} · ${answered}/${placeT.questions.length} beantwortet`;
+  if(sub && answered>=placeT.questions.length){ sub.removeAttribute("disabled"); sub.style.opacity=""; }
+}
+function abortPlacement(code){ placeT=null; go("lang",{lang:code}); }
+function scorePlacement(){
+  const byLevel={};
+  placeT.questions.forEach((q,i)=>{
+    byLevel[q.level]=byLevel[q.level]||{c:0,t:0};
+    byLevel[q.level].t++;
+    if(placeT.answers[i]===q.answer) byLevel[q.level].c++;
+  });
+  let recommended="A1";
+  for(const lv of CEFR){
+    const b=byLevel[lv];
+    if(!b) continue;
+    if(b.c/b.t >= 0.6) recommended=lv; else break;
+  }
+  placeT.submitted=true; placeT.result=recommended; placeT.byLevel=byLevel;
+  renderPlacementResult();
+}
+function renderPlacementResult(){
+  const code=placeT.code, l=L(code), rec=placeT.result;
+  const correct=placeT.questions.reduce((n,q,i)=>n+(placeT.answers[i]===q.answer?1:0),0);
+  const breakdown=CEFR.filter(lv=>placeT.byLevel[lv]).map(lv=>{
+    const b=placeT.byLevel[lv], ratio=b.c/b.t, pass=ratio>=0.6;
+    return `<div class="word"><b>${lv}</b><span>${b.c}/${b.t} ${pass?'✓':''}</span></div>`;
+  }).join("");
+  const levelBtns=CEFR.map(lv=>`<button class="q-opt ${lv===rec?'sel':''}" onclick="choosePlacement('${lv}')">${lv} — ${SELF_DESC[lv]}</button>`).join("");
+  app().innerHTML=`
+    <button class="back" onclick="go('lang',{lang:'${code}'})">‹ Zurück</button>
+    <h1 class="page-title">Dein Ergebnis</h1>
+    <p class="page-sub">${l.flag} ${l.name} · ${correct}/${placeT.questions.length} richtig</p>
+    <div class="card" style="border-color:var(--ink)">
+      <div class="pc-t" style="font-size:18px">Empfohlenes Niveau: ${rec}</div>
+      <p class="hint" style="margin:6px 0 12px">${SELF_DESC[rec]}</p>
+      <button class="btn" onclick="choosePlacement('${rec}')">Pfad ab ${rec} starten</button>
+    </div>
+    <p class="eyebrow" style="margin-top:18px">Ergebnis pro Niveau</p>
+    <div class="card">${breakdown}</div>
+    <p class="eyebrow" style="margin-top:18px">Oder anderes Niveau wählen</p>
+    ${levelBtns}
+  `;
+}
+function choosePlacement(level){
+  const code=placeT? placeT.code : view.lang;
+  applyPlacement(code, level);
+  placeT=null;
+  toast("Eingestuft: "+level+" — Station freigeschaltet");
+  go("lang",{lang:code, focusStation:true});
+}
+function renderSelfAssess(code){
+  const l=L(code);
+  const btns=CEFR.map(lv=>`<button class="q-opt" onclick="choosePlacementSelf('${code}','${lv}')">${lv} — ${SELF_DESC[lv]}</button>`).join("");
+  app().innerHTML=`
+    <button class="back" onclick="go('placement',{lang:'${code}'})">‹ Zurück</button>
+    <h1 class="page-title">Selbst einschätzen</h1>
+    <p class="page-sub">${l.flag} ${l.name} · Wähle dein Niveau</p>
+    ${btns}
+    <p class="hint" style="margin-top:12px">Du kannst später jederzeit neu einstufen (Einstellungen).</p>
+  `;
+}
+function choosePlacementSelf(code,level){ applyPlacement(code,level); toast("Eingestuft: "+level+" — Station freigeschaltet"); go("lang",{lang:code, focusStation:true}); }
+function replaceLevel(code){ placeT=null; go("placement",{lang:code}); }
 
 /* =========================================================
    EINHEIT / SESSION-BRIEF
@@ -1100,7 +1542,7 @@ function renderListen(){
     <div class="field"><label>Niveau</label><select id="lsLevel">${levelOpts}</select></div>
     <div class="field"><label>Thema</label><input id="lsTopic" value="${esc(presetTopic)}" placeholder="z. B. Mein Arbeitsweg, Klinische Studien…"></div>
     <div class="field"><label>Wortanzahl</label>
-      <input id="lsWords" type="number" inputmode="numeric" min="30" max="2000" step="10" value="${selWords}" placeholder="z. B. 250">
+      <input id="lsWords" type="number" inputmode="numeric" min="30" max="8000" step="10" value="${selWords}" placeholder="z. B. 250">
       <div class="seg" id="lsWordPresets" style="margin-top:8px">${presetChips}</div>
     </div>
 
@@ -1119,7 +1561,7 @@ function makeListenPrompt(){
   const level=document.getElementById("lsLevel").value;
   const topic=(document.getElementById("lsTopic").value||"").trim();
   let words=parseInt(document.getElementById("lsWords").value,10);
-  if(!words||words<30) words=250; if(words>2000) words=2000;
+  if(!words||words<30) words=250; if(words>8000) words=8000;
   if(!topic){ toast("Bitte ein Thema eingeben"); return; }
   state.settings.listenCfg = { lang:code, level, words, topic };
   saveState();
@@ -1177,15 +1619,27 @@ function renderSettings(){
     return `<div class="field"><label>${LANG_CONFIG[c].flag} ${LANG_CONFIG[c].name}</label><div class="seg">${segs}</div></div>`;
   }).join("");
   const regSeg = Object.keys(REGISTERS).map(k=>`<button class="${registerKey()===k?'on':''}" onclick="setRegister('${k}')">${REGISTERS[k].label}</button>`).join("");
+  const pathInfo = Object.keys(LANG_CONFIG).map(c=>{
+    const pp=pathProgress(c); const placed=!!state.langs[c].placed;
+    return `<div class="card" style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+      <span class="flag" style="font-size:22px">${LANG_CONFIG[c].flag}</span>
+      <div style="flex:1"><b>${LANG_CONFIG[c].name}</b><div class="hint">${placed?`Eingestuft: ${state.langs[c].level} · ${pp.done}/${pp.total} Stationen`:"Noch nicht eingestuft"}</div></div>
+      <button class="btn ghost sm" style="width:auto" onclick="replaceLevel('${c}')">Neu einstufen</button>
+    </div>`;
+  }).join("");
 
   app().innerHTML = `
     <button class="back" onclick="go('home')">‹ Zurück</button>
     <h1 class="page-title">Einstellungen</h1>
-    <p class="page-sub">plan. erstellt deinen Lernplan und übergibt jede Einheit als Auftrag an Langua.</p>
+    <p class="page-sub">plan. führt dich entlang eines Lernpfads von A1 bis C2.</p>
+
+    <p class="eyebrow">Lernpfad & Einstufung</p>
+    ${pathInfo}
+    <p class="hint" style="margin:2px 0 22px">„Neu einstufen" startet den Test erneut und setzt den Startpunkt deines Pfads.</p>
 
     <p class="eyebrow">Niveau je Sprache</p>
     ${levelFields}
-    <p class="hint" style="margin:-4px 0 22px">Niveau ändern wirkt sich auf neu erstellte Pläne aus.</p>
+    <p class="hint" style="margin:-4px 0 22px">Das Niveau steuert die Sprache der Langua- und ChatGPT-Aufträge.</p>
 
     <p class="eyebrow">Sprachstil</p>
     <div class="field" style="margin-bottom:22px"><div class="seg">${regSeg}</div>
@@ -1243,9 +1697,10 @@ function resetAll(){ if(confirm("Alle Pläne und Fortschritte löschen?")){ loca
 Object.assign(window, {
   go, openLang, openUnit, markUnit, markVocab, toggleVocabCat, toggleFlowStep, toggleFlowOpen, openLangua,
   makeListenPrompt, setListenWords, openChatGPT,
-  toggleModule, addCustomTopic,
+  openStation, toggleStationPart, completeStation, gotoNextStation, toggleCefr, renderLevelInfo, togglePreview,
+  startPlacement, selectAnswer, scorePlacement, choosePlacement, choosePlacementSelf, abortPlacement,
   analyzeSong, resetSong, copyText,
-  toggleRoutineLang, setFocus, setLevel, setRegister, saveConn, exportData, importData, resetAll,
+  toggleRoutineLang, setFocus, setLevel, setRegister, saveConn, exportData, importData, resetAll, replaceLevel,
   renderUnit, renderSong, renderSettings, renderVocabList, renderVocabItem, renderListen
 });
 
